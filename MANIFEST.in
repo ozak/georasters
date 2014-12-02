@@ -1,0 +1,2 @@
+include LICENSE.txt README.rst
+exclude MANIFEST.in
