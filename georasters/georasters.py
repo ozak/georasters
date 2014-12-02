@@ -336,7 +336,18 @@ def union(rasters):
         out = ndv*np.ones(shape)
         for i in rasters:
             (col,row) = map_pixel(i.xmin, i.ymax, rasters[0].geot[1], rasters[0].geot[-1], lonmin, latmax)
-            out[row:row+i.shape[0],col:col+i.shape[1]] = np.where(i.raster.data!=ndv, i.raster.data, out[row:row+i.shape[0],col:col+i.shape[1]])#i.raster
+            out[row:row+i.shape[0],col:col+i.shape[1]] = np.where(i.raster.data!=i.nodata_value, i.raster.data, out[row:row+i.shape[0],col:col+i.shape[1]])#i.raster
         return GeoRaster(out, (lonmin, rasters[0].geot[1], 0.0, latmax, 0.0, rasters[0].geot[-1]), nodata_value=ndv)
     else:
         raise RasterGeoError('Rasters need to have same pixel sizes. Use the aggregate or dissolve functions to generate correct GeoRasters')
+
+def merge(rasters):
+    """
+    Merges GeoRasters, same as union
+    Usage:
+        merge(rasters)
+    where
+        rasters is a list of GeoRaster objects
+    """
+    return union(rasters)
+
