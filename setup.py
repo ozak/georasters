@@ -25,6 +25,7 @@ setup(name='georasters',
           'pandas', 
           'pyproj',
           'scikit-image',
+          'matplotlib'
       ],
       classifiers=[
           "Development Status :: 1 - Planning",
