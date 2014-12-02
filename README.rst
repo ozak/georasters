@@ -46,4 +46,20 @@ Example Usage
     # Align two rasters
     data2 = load_tiff(raster2)
     (alignedraster_o, alignedraster_a, GeoT_a) = gr.align_rasters(raster, raster2, how=np.mean)
-   
+    
+    # Create GeoRaster
+    A=gr.GeoRaster(data, GeoT, nodata_value=NDV)
+
+    # Load another raster
+    NDV, xsize, ysize, GeoT, Projection, DataType = gr.get_geo_info(raster2)
+    data = load_tiff(raster2)
+    B=gr.GeoRaster(data2, GeoT, nodata_value=NDV)
+    
+    # Plot Raster
+    A.plot()
+    
+    # Merge both rasters and plot
+    C=B.merge(A)
+    C.plot()
+    
+    
