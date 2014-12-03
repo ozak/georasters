@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/ozak/georasters.svg)](https://travis-ci.org/ozak/georasters)
+
 GeoRasters
 ===========
 

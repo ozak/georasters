@@ -18,14 +18,13 @@ setup(name='georasters',
       #package_dir={'': 'src'},
       packages=['georasters'],
       install_requires=[
-          'shapely',
           'numpy',
           'GDAL',
           'docopt',
           'pandas', 
           'pyproj',
           'scikit-image',
-          'matplotlib'
+          'matplotlib',
       ],
       classifiers=[
           "Development Status :: 1 - Planning",

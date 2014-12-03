@@ -1,0 +1,9 @@
+numpy
+pandas
+docopt
+numpy
+GDAL
+docopt
+pyproj
+scikit-image
+matplotlib
