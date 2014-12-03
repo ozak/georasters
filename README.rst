@@ -1,4 +1,6 @@
-[![Build Status](https://travis-ci.org/ozak/georasters.svg)](https://travis-ci.org/ozak/georasters)
+.. image:: https://travis-ci.org/ozak/georasters.svg
+  :alt: Travis CI build status
+  :target: https://travis-ci.org/ozak/georasters
 
 GeoRasters
 ===========
