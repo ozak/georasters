@@ -1,7 +1,6 @@
 numpy
 pandas
 docopt
-numpy
 GDAL
 docopt
 pyproj

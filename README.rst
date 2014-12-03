@@ -1,9 +1,10 @@
-.. image:: https://travis-ci.org/ozak/georasters.svg
-  :alt: Travis CI build status
-  :target: https://travis-ci.org/ozak/georasters
-
 GeoRasters
 ===========
+
+|BuildStatus|_ 
+|CoverageStatus|_
+|PyPiVersion|_
+|PyPiDownloads|_
 
 The ``GeoRasters`` package is a python module that provides a fast and flexible
 tool to work with GIS raster files. It provides the GeoRaster class, which makes working with rasters quite transparent and easy.
@@ -66,4 +67,23 @@ Example Usage
     C=B.merge(A)
     C.plot()
     
-    
+Issues
+------
+
+Find a bug? Report it via github issues by providing
+
+- a link to download the smallest possible raster and vector dataset necessary to reproduce the error
+- python code or command to reproduce the error
+- information on your environment: versions of python, gdal and numpy and system memory
+
+.. |BuildStatus| image:: https://api.travis-ci.org/ozak/georasters.png
+.. _BuildStatus: https://travis-ci.org/ozak/georasters
+
+.. |CoverageStatus| image:: https://coveralls.io/repos/ozak/georasters/badge.png
+.. _CoverageStatus: https://coveralls.io/r/ozak/georasters
+
+.. |PyPiVersion| image:: https://pypip.in/v/georasters/badge.png
+.. _PyPiVersion: http://pypi.python.org/pypi/georasters
+
+.. |PyPiDownloads| image:: https://pypip.in/d/georasters/badge.png
+.. _PyPiDownloads: http://pypi.python.org/pypi/georasters

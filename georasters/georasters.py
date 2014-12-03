@@ -497,6 +497,21 @@ class GeoRaster():
         '''
         return self.raster.var(*args, **kwargs)
 
+    def flatten(self, *args, **kwargs):
+        '''
+        geo.flatten(order='C')
+
+        Return a copy of the array collapsed into one dimension.
+
+        Parameters
+        ----------
+        order : {'C', 'F', 'A'}, optional
+            Whether to flatten in C (row-major), Fortran (column-major) order,
+            or preserve the C/Fortran ordering from `a`.
+            The default is 'C'.
+        '''
+        return self.raster.flatten(*args, **kwargs)
+
     def apply(self, func, *args, **kwargs):
         '''
         geo.apply(func, *args, **kwargs)
