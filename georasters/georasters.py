@@ -202,16 +202,33 @@ class GeoRaster():
     '''
     GeoRaster class to create and handle GIS rasters
     Eash GeoRaster object is a numpy masked array + geotransfrom + nodata_value
+    Usage:
+        geo=GeoRaster(raster, geot, nodata_value = ndv)
+    where
+        raster: Numpy masked array with the raster data, which could be loaded with the load_tiff(file)
+        geot: GDAL Geotransformation
+        nodata_value: No data value in raster, optional
     '''
     def __init__(self, raster, geot, nodata_value = np.nan):
+        '''
+        Initialize Georaster
+        Usage:
+            geo=GeoRaster(raster, geot, nodata_value = ndv)
+        where
+            raster: Numpy masked array with the raster data, which could be loaded with the load_tiff(file)
+            geot: GDAL Geotransformation
+            nodata_value: No data value in raster, optional
+        '''
         self.raster = raster
         self.geot = geot
         self.nodata_value = nodata_value
         self.shape = raster.shape
+        self.x_cell_size = geot[1]
+        self.y_cell_size = geot[-1]
         self.xmin = geot[0]
         self.ymax = geot[3]
-        self.xmax = self.xmin + geot[1] * self.shape[1]
-        self.ymin = self.ymax + geot[-1] * self.shape[0]
+        self.xmax = self.xmin + self.x_cell_size * self.shape[1]
+        self.ymin = self.ymax + self.y_cell_size * self.shape[0]
         self.bounds = (self.xmin, self.ymin, self.xmax, self.ymax)
 
     def __pos__(self):
@@ -309,10 +326,210 @@ class GeoRaster():
             return GeoRaster(self.raster**other, self.geot, nodata_value=self.nodata_value)
 
     def plot(self):
+        '''
+        geo.plot()
+
+        Returns plot of raster data
+        '''
         plt.matshow(self.raster)
 
     def union(self, other):
+        '''
+        geo.union(Georaster)
+
+        Returns union of GeoRaster with another one
+        '''
         return union([self,other])
+
+    def merge(self, other):
+        '''
+        geo.merge(Georaster)
+
+        Returns merge of GeoRaster with another one
+        '''
+        return merge([self,other])
+
+    def mean(self, *args, **kwargs):
+        '''
+        geo.mean(axis=None, dtype=None, out=None)
+
+        Returns the average of the array elements along given axis.
+
+        Refer to `numpy.mean` for full documentation.
+
+        See Also
+        --------
+        numpy.mean : equivalent function
+        '''
+        return self.raster.mean(*args, **kwargs)
+
+    def max(self, *args, **kwargs):
+        '''
+        geo.max(axis=None, out=None)
+
+        Return the maximum along a given axis.
+
+        Refer to `numpy.amax` for full documentation.
+
+        See Also
+        --------
+        numpy.amax : equivalent function
+        '''
+        return self.raster.max(*args, **kwargs)
+
+    def min(self, *args, **kwargs):
+        '''
+        geo.min(axis=None, out=None)
+
+        Return the minimum along a given axis.
+
+        Refer to `numpy.amin` for full documentation.
+
+        See Also
+        --------
+        numpy.amin : equivalent function
+        '''
+        return self.raster.min(*args, **kwargs)
+
+    def median(self, *args, **kwargs):
+        '''
+        geo.median(axis=None, out=None, overwrite_input=False)
+        
+        axis : int, optional
+            Axis along which the medians are computed. The default (axis=None)
+            is to compute the median along a flattened version of the array.
+        out : ndarray, optional
+            Alternative output array in which to place the result. It must have
+            the same shape and buffer length as the expected output, but the
+            type (of the output) will be cast if necessary.
+        overwrite_input : bool, optional
+           If True, then allow use of memory of input array (a) for
+           calculations. The input array will be modified by the call to
+           median. This will save memory when you do not need to preserve the
+           contents of the input array. Treat the input as undefined, but it
+           will probably be fully or partially sorted. Default is False. Note
+           that, if `overwrite_input` is True and the input is not already an
+           ndarray, an error will be raised.
+        '''
+        return np.median(self.raster.max, *args, **kwargs)
+
+    def std(self, *args, **kwargs):
+        '''
+        geo.std(axis=None, dtype=None, out=None, ddof=0)
+
+        Returns the standard deviation of the array elements along given axis.
+
+        Refer to `numpy.std` for full documentation.
+
+        See Also
+        --------
+        numpy.std : equivalent function
+        '''
+        return self.raster.std(*args, **kwargs)
+
+    def argmax(self, *args, **kwargs):
+        '''
+        geo.argmax(axis=None, out=None)
+
+        Return indices of the maximum values along the given axis.
+
+        Refer to `numpy.argmax` for full documentation.
+
+        See Also
+        --------
+        numpy.argmax : equivalent function
+        '''
+        return self.raster.argmax(*args, **kwargs)
+
+    def argmin(self, *args, **kwargs):
+        '''
+        geo.argmin(axis=None, out=None)
+
+        Return indices of the minimum values along the given axis of `a`.
+
+        Refer to `numpy.argmin` for detailed documentation.
+
+        See Also
+        --------
+        numpy.argmin : equivalent function
+        '''
+        return self.raster.argmin(*args, **kwargs)
+
+    def sum(self, *args, **kwargs):
+        '''
+        geo.sum(axis=None, dtype=None, out=None)
+
+        Return the sum of the array elements over the given axis.
+
+        Refer to `numpy.sum` for full documentation.
+
+        See Also
+        --------
+        numpy.sum : equivalent function
+        '''
+        return self.raster.sum(*args, **kwargs)
+
+    def prod(self, *args, **kwargs):
+        '''
+        geo.prod(axis=None, dtype=None, out=None)
+
+        Return the product of the array elements over the given axis
+
+        Refer to `numpy.prod` for full documentation.
+
+        See Also
+        --------
+        numpy.prod : equivalent function
+        '''
+        return self.raster.prod(*args, **kwargs)
+
+    def var(self, *args, **kwargs):
+        '''
+        geo.var(axis=None, dtype=None, out=None, ddof=0)
+
+        Returns the variance of the array elements, along given axis.
+
+        Refer to `numpy.var` for full documentation.
+
+        See Also
+        --------
+        numpy.var : equivalent function
+        '''
+        return self.raster.var(*args, **kwargs)
+
+    def apply(self, func, *args, **kwargs):
+        '''
+        geo.apply(func, *args, **kwargs)
+        
+        Returns the value of applying function func on the raster data
+        
+        func: Python function
+        *args: Arguments of function
+        **kwargs: Additional arguments of function
+        '''
+        return func(self.raster, *args, **kwargs)
+
+    def map_pixel(self, point_x, point_y):
+        '''
+        geo.map_pixel(point_x, point_y)
+        
+        Return value of raster in location 
+        '''
+        col, row =map_pixel(point_x, point_y, self.x_cell_size, self.y_cell_size, self.xmin, self.ymax)
+        return self.raster[row, col]
+
+    def extract(self, point_x, point_y, radius=0):
+        '''
+        geo.extract(x, y, radius=r)
+        
+        Return subraster of raster geo around location (x,y) with radius r
+        where (x,y) and r are in the same coordinate system as geo
+        '''
+        col, row =map_pixel(point_x, point_y, self.x_cell_size, self.y_cell_size, self.xmin, self.ymax)
+        col2 = self.x_cell_size/radius
+        row2 = self.y_cell_size/radius
+        return GeoRaster(self.raster[max(row-row2, 0):min(row+row2, self.shape[0]), \
+                        max(col-col2, 0):min(col+col2, self.shape[1])], self.geot, nodata_value = self.nodata_value)
 
 # Union of rasters
 def union(rasters):
@@ -336,7 +553,8 @@ def union(rasters):
         out = ndv*np.ones(shape)
         for i in rasters:
             (col,row) = map_pixel(i.xmin, i.ymax, rasters[0].geot[1], rasters[0].geot[-1], lonmin, latmax)
-            out[row:row+i.shape[0],col:col+i.shape[1]] = np.where(i.raster.data!=i.nodata_value, i.raster.data, out[row:row+i.shape[0],col:col+i.shape[1]])#i.raster
+            out[row:row+i.shape[0],col:col+i.shape[1]] = np.where(i.raster.data!=i.nodata_value, i.raster.data,\
+                                                         out[row:row+i.shape[0],col:col+i.shape[1]])#i.raster
         return GeoRaster(out, (lonmin, rasters[0].geot[1], 0.0, latmax, 0.0, rasters[0].geot[-1]), nodata_value=ndv)
     else:
         raise RasterGeoError('Rasters need to have same pixel sizes. Use the aggregate or dissolve functions to generate correct GeoRasters')
