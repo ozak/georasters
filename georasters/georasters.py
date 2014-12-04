@@ -341,11 +341,11 @@ class GeoRaster():
          geo.datatype = 'gdal.GDT_'+type
         '''
         if self.datatype is None:
-            self.datatype = type(self.raster.data[0,1])
-            if self.datatype.find('int')!=-1:
-                self.datatype = gdal.GDT_Int32
-            else:
-                self.datatype = gdal.GDT_Float64
+            try:
+                self.datatype = NP2GDAL_CONVERSION[self.raster.data.dtype.name]
+            except:
+                self.raster = self.raster.astype(np.int32)
+                self.datatype = NP2GDAL_CONVERSION[self.raster.data.dtype.name]
         create_geotiff(filename, self.raster, gdal.GetDriverByName('GTiff'), self.nodata_value, self.shape[1], self.shape[0], self.geot, self.projection, self.datatype)
 
     def plot(self):
@@ -637,3 +637,17 @@ def from_file(filename):
     data = gdalnumeric.LoadFile(filename)
     data = np.ma.masked_array(data, mask=data==NDV,fill_value=NDV)
     return GeoRaster(data,GeoT, nodata_value=NDV, projection=Projection, datatype=DataType)
+
+# GDAL conversion types
+NP2GDAL_CONVERSION = {
+  "uint8": 1,
+  "int8": 1,
+  "uint16": 2,
+  "int16": 3,
+  "uint32": 4,
+  "int32": 5,
+  "float32": 6,
+  "float64": 7,
+  "complex64": 10,
+  "complex128": 11,
+}
