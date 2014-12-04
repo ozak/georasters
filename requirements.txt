@@ -5,3 +5,4 @@ GDAL
 pyproj
 scikit-image
 matplotlib
+nose
