@@ -36,7 +36,7 @@ from osgeo import gdal, gdalnumeric, ogr, osr
 from gdalconst import *
 from skimage.measure import block_reduce
 import matplotlib.pyplot as plt
-#import pandas as pd
+import pandas as pd
 
 # Function to read the original file's projection:
 def get_geo_info(FileName):
