@@ -176,7 +176,7 @@ def align_rasters(raster,alignraster,how=np.mean,cxsize=None,cysize=None,masked=
 		GeoT=(max(GeoT1[0],GeoT2[0]), GeoT1[1]*blocksize[0], GeoT1[2], min(GeoT1[3],GeoT2[3]), GeoT1[4] ,GeoT1[-1]*blocksize[1])
 		return (mraster,araster,GeoT)
 	else:
-		print "Rasters need to be in same projection"
+		print("Rasters need to be in same projection")
 		return (-1,-1,-1)
 
 # Load GeoTif raster data
@@ -209,7 +209,7 @@ class GeoRaster():
         geot: GDAL Geotransformation
         nodata_value: No data value in raster, optional
     '''
-    def __init__(self, raster, geot, nodata_value = np.nan):
+    def __init__(self, raster, geot, nodata_value = np.nan, projection = None):
         '''
         Initialize Georaster
         Usage:
@@ -230,6 +230,7 @@ class GeoRaster():
         self.xmax = self.xmin + self.x_cell_size * self.shape[1]
         self.ymin = self.ymax + self.y_cell_size * self.shape[0]
         self.bounds = (self.xmin, self.ymin, self.xmax, self.ymax)
+        self.projection = projection
 
     def __pos__(self):
         return self
@@ -497,6 +498,14 @@ class GeoRaster():
         '''
         return self.raster.var(*args, **kwargs)
 
+    def gini(self):
+        """Return computed Gini coefficient.
+        """
+        xsort = sorted(self.raster.data[self.raster.data!=self.nodata_value].flatten()) # increasing order
+        y = np.cumsum(xsort)
+        B = sum(y) / (y[-1] * len(xsort))
+        return 1 + 1./len(xsort) - 2*B
+
     def flatten(self, *args, **kwargs):
         '''
         geo.flatten(order='C')
@@ -555,7 +564,7 @@ def union(rasters):
     where
         rasters is a list of GeoRaster objects
     """
-    if sum([rasters[0].geot[1]==i.geot[1] for i in rasters])==len(rasters) and sum([rasters[0].geot[-1]==i.geot[-1] for i in rasters])==len(rasters):
+    if sum([rasters[0].x_cell_size==i.x_cell_size for i in rasters])==len(rasters) and sum([rasters[0].y_cell_size==i.y_cell_size for i in rasters])==len(rasters):
         if sum([rasters[0].nodata_value==i.nodata_value for i in rasters])==len(rasters):
             ndv=rasters[0].nodata_value
         else:
@@ -564,13 +573,13 @@ def union(rasters):
         lonmax = max([i.xmax for i in rasters])
         latmin = min([i.ymin for i in rasters])
         latmax = max([i.ymax for i in rasters])
-        shape = (np.round((latmax-latmin)/rasters[0].geot[1]).astype(int),np.round((lonmax-lonmin)/rasters[0].geot[1]).astype(int))
+        shape = (np.round((latmax-latmin)/rasters[0].x_cell_size).astype(int),np.round((lonmax-lonmin)/rasters[0].x_cell_size).astype(int))
         out = ndv*np.ones(shape)
         for i in rasters:
-            (col,row) = map_pixel(i.xmin, i.ymax, rasters[0].geot[1], rasters[0].geot[-1], lonmin, latmax)
+            (col,row) = map_pixel(i.xmin, i.ymax, rasters[0].x_cell_size, rasters[0].y_cell_size, lonmin, latmax)
             out[row:row+i.shape[0],col:col+i.shape[1]] = np.where(i.raster.data!=i.nodata_value, i.raster.data,\
                                                          out[row:row+i.shape[0],col:col+i.shape[1]])#i.raster
-        return GeoRaster(out, (lonmin, rasters[0].geot[1], 0.0, latmax, 0.0, rasters[0].geot[-1]), nodata_value=ndv)
+        return GeoRaster(out, (lonmin, rasters[0].x_cell_size, 0.0, latmax, 0.0, rasters[0].y_cell_size), nodata_value=ndv)
     else:
         raise RasterGeoError('Rasters need to have same pixel sizes. Use the aggregate or dissolve functions to generate correct GeoRasters')
 
@@ -584,3 +593,11 @@ def merge(rasters):
     """
     return union(rasters)
 
+# Load data into a GeoRaster from file
+def from_file(filename):
+    """
+    Create a GeoRaster object from a file
+    """
+    NDV, xsize, ysize, GeoT, Projection, DataType = get_geo_info(filename)
+    A = gdalnumeric.LoadFile(filename)
+    return GeoRaster(A,GeoT, nodata_value=NDV, projection=Projection)
