@@ -32,11 +32,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 from __future__ import division
 import numpy as np
-import pandas as pd
 from osgeo import gdal, gdalnumeric, ogr, osr
 from gdalconst import *
 from skimage.measure import block_reduce
 import matplotlib.pyplot as plt
+#import pandas as pd
 
 # Function to read the original file's projection:
 def get_geo_info(FileName):
