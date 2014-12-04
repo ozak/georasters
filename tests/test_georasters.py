@@ -2,13 +2,15 @@
 from __future__ import division
 import os, sys
 import pytest
+import georasters
+'''
 import numpy as np
 import pandas as pd
 from osgeo import gdal, gdalnumeric, ogr, osr
 from gdalconst import *
 from skimage.measure import block_reduce
 import matplotlib.pyplot as plt
-import georasters
+'''
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
