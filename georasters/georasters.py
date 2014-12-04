@@ -219,7 +219,10 @@ class GeoRaster():
             geot: GDAL Geotransformation
             nodata_value: No data value in raster, optional
         '''
-        self.raster = raster
+        if isinstance(raster, np.ma.core.MaskedArray):
+            self.raster = raster
+        else:
+            self.raster = np.ma.masked_array(raster, mask= raster==nodata_value, fill_value=nodata_value)
         self.geot = geot
         self.nodata_value = nodata_value
         self.shape = raster.shape
@@ -517,13 +520,26 @@ class GeoRaster():
         '''
         return self.raster.var(*args, **kwargs)
 
+    def count(self, *args, **kwargs):
+        '''
+        geo.count(axis=None)
+        Count the non-masked elements of the array along the given axis.
+        '''
+        return self.raster.count(*args, **kwargs)
+
     def gini(self):
-        """Return computed Gini coefficient.
         """
-        xsort = sorted(self.raster.data[self.raster.data!=self.nodata_value].flatten()) # increasing order
-        y = np.cumsum(xsort)
-        B = sum(y) / (y[-1] * len(xsort))
-        return 1 + 1./len(xsort) - 2*B
+        geo.gini()
+        
+        Return computed Gini coefficient.
+        """
+        if self.count()>1:
+            xsort = sorted(self.raster.data[self.raster.data!=self.nodata_value].flatten()) # increasing order
+            y = np.cumsum(xsort)
+            B = sum(y) / (y[-1] * len(xsort))
+            return 1 + 1./len(xsort) - 2*B
+        else:
+            return 1
 
     def flatten(self, *args, **kwargs):
         '''
