@@ -33,12 +33,12 @@ install:
   - source activate env_name
   - pip install pytest  # not yet available for py3 in anaconda 
   - pip install coveralls
-  - python setup.py install
   - "pip install -r requirements.txt"
   - "pip install -r requirements_dev.txt"
+  - python setup.py install
 script: 
   - py.test
-  - nosetests --with-xunit 
+  - nosetests --with-cov --cov georasters --cov-config .coveragerc --logging-level=INFO
   - coverage run --source=georaster --include *georaster* setup.py test
 after_success:
-  - coveralls
+  - coveralls --config_file .coveragerc
