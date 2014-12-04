@@ -31,7 +31,6 @@ env:
 install:
   - conda create --yes -n env_name python=$TRAVIS_PYTHON_VERSION pip cython numpy matplotlib pandas gdal
   - source activate env_name
-  - source activate env_name
   - pip install pytest  # not yet available for py3 in anaconda 
   - pip install coveralls
   - python setup.py install

@@ -27,14 +27,35 @@ Install
 
 .. code-block:: python
     
+    pip install git+git://github.com/ozak/georasters.git
     pip install georasters
    
-Example Usage
--------------
+Example Usage: GeoRasters
+-------------------------
 
 .. code-block:: python
     
     import georasters as gr
+    
+    # Load data
+    raster = './data/slope.tif'
+    data = gr.from_file(raster)
+    
+    # Plot data
+    data.plot()
+    
+    # Get some stats
+    data.mean()
+    data.sum()
+    data.std()
+
+Example Usage: Other functions
+------------------------------
+
+.. code-block:: python
+    
+    import georasters as gr
+    
     # Get info on raster
     NDV, xsize, ysize, GeoT, Projection, DataType = gr.get_geo_info(raster)
     
