@@ -599,5 +599,6 @@ def from_file(filename):
     Create a GeoRaster object from a file
     """
     NDV, xsize, ysize, GeoT, Projection, DataType = get_geo_info(filename)
-    A = gdalnumeric.LoadFile(filename)
-    return GeoRaster(A,GeoT, nodata_value=NDV, projection=Projection)
+    data = gdalnumeric.LoadFile(filename)
+    data = np.ma.masked_array(data, mask=data==NDV,fill_value=NDV)
+    return GeoRaster(data,GeoT, nodata_value=NDV, projection=Projection)
