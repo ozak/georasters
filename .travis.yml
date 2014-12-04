@@ -38,7 +38,6 @@ install:
   - python setup.py install
 script: 
   - py.test
-  - nosetests --with-cov --cov georasters --cov-config .coveragerc --logging-level=INFO
-  - coverage run --source=georaster --include *georaster* setup.py test
+  - coverage run --source=georaster setup.py test
 after_success:
   - coveralls --config_file .coveragerc
