@@ -36,6 +36,8 @@ install:
   - python setup.py install
   - "pip install -r requirements.txt"
   - "pip install -r requirements_dev.txt"
-script: "coverage run --source=georaster --include *georaster* setup.py test"
+script: 
+  - nosetests --with-xunit 
+  - coverage run --source=georaster --include *georaster* setup.py test
 after_success:
   - coveralls
