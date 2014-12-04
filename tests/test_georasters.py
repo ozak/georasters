@@ -17,9 +17,9 @@ raster = os.path.join(DATA, 'slope.tif')
 def test_main():
     import georasters as gr
     A = gr.from_file(raster)
-    assert A.mean()==-434.31342
+    assert A.mean()==56.813046574133502
     assert A.raster.count() == 6232
-    assert A.max() == 737.9317
+    assert A.min() == 0
+    assert A.max() == 737.9317+1.6601562720097718e-06
     assert A.projection.ExportToProj4() == '+proj=aea +lat_1=43 +lat_2=48 +lat_0=34 +lon_0=-120 +x_0=600000 +y_0=0 +ellps=GRS80 +units=m +no_defs '
-
 
