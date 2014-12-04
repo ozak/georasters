@@ -209,7 +209,7 @@ class GeoRaster():
         geot: GDAL Geotransformation
         nodata_value: No data value in raster, optional
     '''
-    def __init__(self, raster, geot, nodata_value = np.nan, projection = None):
+    def __init__(self, raster, geot, nodata_value = np.nan, projection = None, datatype=None):
         '''
         Initialize Georaster
         Usage:
@@ -231,6 +231,7 @@ class GeoRaster():
         self.ymin = self.ymax + self.y_cell_size * self.shape[0]
         self.bounds = (self.xmin, self.ymin, self.xmax, self.ymax)
         self.projection = projection
+        self.datatype=datatype
 
     def __pos__(self):
         return self
@@ -325,6 +326,24 @@ class GeoRaster():
                 raise RasterGeoTError("Rasters must have same geotransform. If needed first create union or allign them.")
         else:
             return GeoRaster(self.raster**other, self.geot, nodata_value=self.nodata_value)
+
+    def to_tiff(self, filename):
+        '''
+        geo.to_tiff(filename)
+        
+        Saves GeoRaster as GeoTiff filename.tif with type datatype
+        
+        If GeoRaster does not have datatype, then it tries to assign a type.
+        You can assign the type yourself by setting
+         geo.datatype = 'gdal.GDT_'+type
+        '''
+        if self.datatype is None:
+            self.datatype = type(self.raster.data[0,1])
+            if self.datatype.find('int')!=-1:
+                self.datatype = gdal.GDT_Int32
+            else:
+                self.datatype = gdal.GDT_Float64
+        create_geotiff(filename, self.raster, gdal.GetDriverByName('GTiff'), self.nodata_value, self.shape[1], self.shape[0], self.geot, self.projection, self.datatype)
 
     def plot(self):
         '''
@@ -601,4 +620,4 @@ def from_file(filename):
     NDV, xsize, ysize, GeoT, Projection, DataType = get_geo_info(filename)
     data = gdalnumeric.LoadFile(filename)
     data = np.ma.masked_array(data, mask=data==NDV,fill_value=NDV)
-    return GeoRaster(data,GeoT, nodata_value=NDV, projection=Projection)
+    return GeoRaster(data,GeoT, nodata_value=NDV, projection=Projection, datatype=DataType)
