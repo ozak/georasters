@@ -98,6 +98,10 @@ Example Merge GeoRasters:
 .. image :: ./tests/data/data3.png
     
 
+Another Merge:
+--------------
+
+
 Example Usage: Other functions
 ------------------------------
 

@@ -43,6 +43,7 @@ def test_union():
                           nodata_value=data.nodata_value, projection=data.projection, datatype=data.datatype)
     data2 = gr.GeoRaster(data.raster[data.shape[0]/2:,:], (xmin,xsize,x,ymax+ysize*data.shape[0]/2,y,ysize), 
                           nodata_value=data.nodata_value, projection=data.projection, datatype=data.datatype)
+    '''
     import matplotlib.pyplot as plt
     plt.figure()
     data1.plot()
@@ -52,6 +53,28 @@ def test_union():
     data2.plot()
     plt.savefig(os.path.join(DATA,'data2.png'))
     
+    from rasterstats import zonal_stats
+    import geopandas as gp
+    import pandas as pd
+    
+    # Import shapefiles
+    pathshp = os.path.join(DATA, 'COL.shp')
+    dfcol=gp.GeoDataFrame.from_file(pathshp)
+    pathshp = os.path.join(DATA, 'TUR.shp')
+    dftur=gp.GeoDataFrame.from_file(pathshp)
+    
+    # Joint geopandas df
+    df=dfcol.append(dftur)
+    df.reset_index(drop=True,inplace=True)
+    
+    stats = zonal_stats(df, raster, copy_properties=True, all_touched=True, raster_out=True, opt_georaster=True)
+    dfcol=pd.merge(dfcol,pd.DataFrame(data=stats), 
+    
+    
+    
+    
+    
+    '''
     assert (data1.union(data2).raster==data.raster).sum()==data.count()
 
 def test_stats():
