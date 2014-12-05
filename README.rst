@@ -48,6 +48,55 @@ Example Usage: GeoRasters
     data.mean()
     data.sum()
     data.std()
+    
+Example Merge GeoRasters:
+-------------------------
+
+.. code-block:: python
+
+    import georasters as gr
+    import matplotlib.pyplot as plt
+    
+    # Import raster
+    raster = os.path.join(DATA, 'pre1500.tif')
+    data = gr.from_file(raster)
+    (xmin,xsize,x,ymax,y,ysize)=data.geot
+    
+    # Split raster in two
+    data1 = gr.GeoRaster(data.raster[:data.shape[0]/2,:], data.geot, 
+                          nodata_value=data.nodata_value, projection=data.projection, datatype=data.datatype)
+    data2 = gr.GeoRaster(data.raster[data.shape[0]/2:,:], (xmin,xsize,x,ymax+ysize*data.shape[0]/2,y,ysize), 
+                          nodata_value=data.nodata_value, projection=data.projection, datatype=data.datatype)
+
+    # Plot both parts and save them
+    plt.figure(figsize=(12,8))
+    data1.plot()
+    plt.savefig(os.path.join(DATA,'data1.png'), bbox_inches='tight')
+
+.. image :: ./tests/data/data1.png
+    
+.. code-block:: python
+
+    plt.figure(figsize=(12,8))
+    data2.plot()
+    plt.savefig(os.path.join(DATA,'data2.png'), bbox_inches='tight')
+    
+.. image :: ./tests/data/data2.png
+    
+.. code-block:: python
+
+    # Generate merged raster
+    
+    data3 = data1.union(data2)
+    
+    # Plot it and save the figure
+    
+    plt.figure(figsize=(12,8))
+    data3.plot()
+    plt.savefig(os.path.join(DATA,'data3.png'), bbox_inches='tight')
+    
+.. image :: ./tests/data/data3.png
+    
 
 Example Usage: Other functions
 ------------------------------

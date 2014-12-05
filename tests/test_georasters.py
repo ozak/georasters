@@ -43,6 +43,15 @@ def test_union():
                           nodata_value=data.nodata_value, projection=data.projection, datatype=data.datatype)
     data2 = gr.GeoRaster(data.raster[data.shape[0]/2:,:], (xmin,xsize,x,ymax+ysize*data.shape[0]/2,y,ysize), 
                           nodata_value=data.nodata_value, projection=data.projection, datatype=data.datatype)
+    import matplotlib.pyplot as plt
+    plt.figure()
+    data1.plot()
+    plt.savefig(os.path.join(DATA,'data1.png'))
+    
+    plt.figure()
+    data2.plot()
+    plt.savefig(os.path.join(DATA,'data2.png'))
+    
     assert (data1.union(data2).raster==data.raster).sum()==data.count()
 
 def test_stats():
