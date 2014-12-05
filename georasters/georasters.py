@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 from __future__ import division
 import numpy as np
-from osgeo import gdal, gdalnumeric, ogr, osr
+from osgeo import gdal, gdalnumeric, ogr, osr, gdal_array
 from gdalconst import *
 from skimage.measure import block_reduce
 import matplotlib.pyplot as plt
@@ -341,11 +341,14 @@ class GeoRaster():
          geo.datatype = 'gdal.GDT_'+type
         '''
         if self.datatype is None:
-            try:
-                self.datatype = NP2GDAL_CONVERSION[self.raster.data.dtype.name]
-            except:
-                self.raster = self.raster.astype(np.int32)
-                self.datatype = NP2GDAL_CONVERSION[self.raster.data.dtype.name]
+            self.datatype = gdal_array.NumericTypeCodeToGDALTypeCode(self.raster.data.dtype)
+            if self.datatype is None:
+                if self.raster.data.dtype.name.find('int')!=-1:
+                    self.raster = self.raster.astype(np.int32)
+                    self.datatype = gdal_array.NumericTypeCodeToGDALTypeCode(self.raster.data.dtype)
+                else:
+                    self.raster = self.raster.astype(np.float64)
+                    self.datatype = gdal_array.NumericTypeCodeToGDALTypeCode(self.raster.data.dtype)
         create_geotiff(filename, self.raster, gdal.GetDriverByName('GTiff'), self.nodata_value, self.shape[1], self.shape[0], self.geot, self.projection, self.datatype)
 
     def plot(self):

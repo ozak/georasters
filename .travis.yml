@@ -40,4 +40,4 @@ script:
   - py.test
   - coverage run --source=georaster setup.py test
 after_success:
-  - coveralls --config_file .coveragerc
+  - coveralls #--config_file .coveragerc
