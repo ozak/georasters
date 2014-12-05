@@ -69,7 +69,7 @@ def map_pixel(point_x, point_y, cellx, celly, xmin, ymax):
 	point_y=np.array(point_y)
 	col = np.around((point_x - xmin) / cellx).astype(int)
 	row = np.around((point_y - ymax) / celly).astype(int)
-	return col,row
+	return row,col
 
 # Aggregate raster to higher resolution using sums
 def aggregate(raster,NDV,block_size):
@@ -138,16 +138,16 @@ def align_rasters(raster,alignraster,how=np.mean,cxsize=None,cysize=None,masked=
 		araster=np.ma.masked_array(araster, mask=araster==NDV2, fill_value=NDV2)
 		amin=araster.min()
 		if GeoT1[0]<=GeoT2[0]:
-			mcol,row3=map_pixel(GeoT2[0], GeoT2[3], GeoT1[1] *blocksize[0],GeoT1[-1]*blocksize[1], GeoT1[0], GeoT1[3])
+			row3,mcol=map_pixel(GeoT2[0], GeoT2[3], GeoT1[1] *blocksize[0],GeoT1[-1]*blocksize[1], GeoT1[0], GeoT1[3])
 			acol=0
 		else:
-			acol,row3=map_pixel(GeoT1[0], GeoT1[3], GeoT2[1],GeoT2[-1], GeoT2[0], GeoT2[3])
+			row3,acol=map_pixel(GeoT1[0], GeoT1[3], GeoT2[1],GeoT2[-1], GeoT2[0], GeoT2[3])
 			mcol=0
 		if GeoT1[3]<=GeoT2[3]:
-			col3,arow=map_pixel(GeoT1[0], GeoT1[3], GeoT2[1],GeoT2[-1], GeoT2[0], GeoT2[3])
+			arow,col3=map_pixel(GeoT1[0], GeoT1[3], GeoT2[1],GeoT2[-1], GeoT2[0], GeoT2[3])
 			mrow=0
 		else:
-			col3,mrow=map_pixel(GeoT2[0], GeoT2[3], GeoT1[1] *blocksize[0],GeoT1[-1]*blocksize[1], GeoT1[0], GeoT1[3])
+			mrow,col3=map_pixel(GeoT2[0], GeoT2[3], GeoT1[1] *blocksize[0],GeoT1[-1]*blocksize[1], GeoT1[0], GeoT1[3])
 			arow=0
 		'''
 		col3,row3=map_pixel(GeoT1[0], GeoT1[3], GeoT2[1],GeoT2[-1], GeoT2[0], GeoT2[3])
@@ -577,7 +577,7 @@ class GeoRaster():
         
         Return value of raster in location 
         '''
-        col, row =map_pixel(point_x, point_y, self.x_cell_size, self.y_cell_size, self.xmin, self.ymax)
+        row, col =map_pixel(point_x, point_y, self.x_cell_size, self.y_cell_size, self.xmin, self.ymax)
         return self.raster[row, col]
 
     def extract(self, point_x, point_y, radius=0):
@@ -587,11 +587,11 @@ class GeoRaster():
         Return subraster of raster geo around location (x,y) with radius r
         where (x,y) and r are in the same coordinate system as geo
         '''
-        col, row =map_pixel(point_x, point_y, self.x_cell_size, self.y_cell_size, self.xmin, self.ymax)
-        col2 = self.x_cell_size/radius
-        row2 = self.y_cell_size/radius
-        return GeoRaster(self.raster[max(row-row2, 0):min(row+row2, self.shape[0]), \
-                        max(col-col2, 0):min(col+col2, self.shape[1])], self.geot, nodata_value = self.nodata_value)
+        row, col =map_pixel(point_x, point_y, self.x_cell_size, self.y_cell_size, self.xmin, self.ymax)
+        col2 = np.abs(radius/self.x_cell_size)
+        row2 = np.abs(radius/self.y_cell_size)
+        return GeoRaster(self.raster[max(row-row2, 0):min(row+row2+1, self.shape[0]), \
+                        max(col-col2, 0):min(col+col2+1, self.shape[1])], self.geot, nodata_value = self.nodata_value)
 
 # Union of rasters
 def union(rasters):
@@ -611,10 +611,10 @@ def union(rasters):
         lonmax = max([i.xmax for i in rasters])
         latmin = min([i.ymin for i in rasters])
         latmax = max([i.ymax for i in rasters])
-        shape = (np.round((latmax-latmin)/rasters[0].x_cell_size).astype(int),np.round((lonmax-lonmin)/rasters[0].x_cell_size).astype(int))
+        shape = (np.abs(np.round((latmax-latmin)/rasters[0].y_cell_size)).astype(int),np.round((lonmax-lonmin)/rasters[0].x_cell_size).astype(int))
         out = ndv*np.ones(shape)
         for i in rasters:
-            (col,row) = map_pixel(i.xmin, i.ymax, rasters[0].x_cell_size, rasters[0].y_cell_size, lonmin, latmax)
+            (row,col) = map_pixel(i.xmin, i.ymax, rasters[0].x_cell_size, rasters[0].y_cell_size, lonmin, latmax)
             out[row:row+i.shape[0],col:col+i.shape[1]] = np.where(i.raster.data!=i.nodata_value, i.raster.data,\
                                                          out[row:row+i.shape[0],col:col+i.shape[1]])#i.raster
         return GeoRaster(out, (lonmin, rasters[0].x_cell_size, 0.0, latmax, 0.0, rasters[0].y_cell_size), nodata_value=ndv)
