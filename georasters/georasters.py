@@ -602,11 +602,18 @@ def union(rasters):
     where
         rasters is a list of GeoRaster objects
     """
-    if sum([rasters[0].x_cell_size==i.x_cell_size for i in rasters])==len(rasters) and sum([rasters[0].y_cell_size==i.y_cell_size for i in rasters])==len(rasters):
+    if sum([rasters[0].x_cell_size==i.x_cell_size for i in rasters])==len(rasters) \
+       and sum([rasters[0].y_cell_size==i.y_cell_size for i in rasters])==len(rasters)\
+       and sum([rasters[0].projection.ExportToProj4()==i.projection.ExportToProj4() for i in rasters])==len(rasters):
         if sum([rasters[0].nodata_value==i.nodata_value for i in rasters])==len(rasters):
             ndv=rasters[0].nodata_value
         else:
             ndv = np.nan
+        if sum([rasters[0].datatype==i.datatype for i in rasters])==len(rasters):
+            datatype=rasters[0].datatype
+        else:
+            datatype = None
+        projection = rasters[0].projection.ExportToProj4()
         lonmin = min([i.xmin for i in rasters])
         lonmax = max([i.xmax for i in rasters])
         latmin = min([i.ymin for i in rasters])
@@ -617,7 +624,7 @@ def union(rasters):
             (row,col) = map_pixel(i.xmin, i.ymax, rasters[0].x_cell_size, rasters[0].y_cell_size, lonmin, latmax)
             out[row:row+i.shape[0],col:col+i.shape[1]] = np.where(i.raster.data!=i.nodata_value, i.raster.data,\
                                                          out[row:row+i.shape[0],col:col+i.shape[1]])#i.raster
-        return GeoRaster(out, (lonmin, rasters[0].x_cell_size, 0.0, latmax, 0.0, rasters[0].y_cell_size), nodata_value=ndv)
+        return GeoRaster(out, (lonmin, rasters[0].x_cell_size, 0.0, latmax, 0.0, rasters[0].y_cell_size), nodata_value=ndv, projection=projection, datatype=datatype)
     else:
         raise RasterGeoError('Rasters need to have same pixel sizes. Use the aggregate or dissolve functions to generate correct GeoRasters')
 

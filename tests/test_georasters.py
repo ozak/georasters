@@ -49,9 +49,13 @@ def test_stats():
     import georasters as gr
     raster = os.path.join(DATA, 'pre1500.tif')
     data = gr.from_file(raster)
+    assert data.argmax() == data.raster.argmax()
+    assert data.argmin() == data.raster.argmin()
     assert data.sum() == data.raster.sum()
     assert data.max() == data.raster.max()
     assert data.min() == data.raster.min()
     assert data.median() == np.ma.median(data.raster)
     assert data.std() == data.raster.std()
     assert data.var() == data.raster.var()
+    assert data.prod() == data.raster.prod()
+    assert data.count() == data.raster.count()
