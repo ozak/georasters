@@ -3,7 +3,7 @@ from __future__ import division
 import os, sys
 import pytest
 import georasters
-from rasterstats import zonal_stats
+import numpy as np
 '''
 import numpy as np
 import pandas as pd
@@ -45,3 +45,13 @@ def test_union():
                           nodata_value=data.nodata_value, projection=data.projection, datatype=data.datatype)
     assert (data1.union(data2).raster==data.raster).sum()==data.count()
 
+def test_stats():
+    import georasters as gr
+    raster = os.path.join(DATA, 'pre1500.tif')
+    data = gr.from_file(raster)
+    assert data.sum() == data.raster.sum()
+    assert data.max() == data.raster.max()
+    assert data.min() == data.raster.min()
+    assert data.median() == np.ma.median(data.raster)
+    assert data.std() == data.raster.std()
+    assert data.var() == data.raster.var()

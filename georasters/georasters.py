@@ -437,7 +437,7 @@ class GeoRaster():
            that, if `overwrite_input` is True and the input is not already an
            ndarray, an error will be raised.
         '''
-        return np.median(self.raster.max, *args, **kwargs)
+        return np.ma.median(self.raster, *args, **kwargs)
 
     def std(self, *args, **kwargs):
         '''
