@@ -5,11 +5,7 @@ Copyright (C) 2014 Ömer Özak
 This program defines functions that are useful for working with GIS data
 Usage:
 
-import gisrastertools
-
-or
-
-from gisrastertools import *
+import georasters as gr
 
 ======================================================
 Author:  Ömer Özak, 2013--2014 (ozak at smu.edu)
@@ -613,7 +609,7 @@ def union(rasters):
             datatype=rasters[0].datatype
         else:
             datatype = None
-        projection = rasters[0].projection.ExportToProj4()
+        projection = rasters[0]
         lonmin = min([i.xmin for i in rasters])
         lonmax = max([i.xmax for i in rasters])
         latmin = min([i.ymin for i in rasters])
