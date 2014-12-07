@@ -578,7 +578,7 @@ class GeoRaster():
         Return computed Gini coefficient.
         """
         if self.count()>1:
-            xsort = sorted(self.raster.data[self.raster.data!=self.nodata_value].flatten()) # increasing order
+            xsort = sorted(self.raster.data[self.raster.mask==False].flatten()) # increasing order
             y = np.cumsum(xsort)
             B = sum(y) / (y[-1] * len(xsort))
             return 1 + 1./len(xsort) - 2*B
