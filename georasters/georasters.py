@@ -59,7 +59,7 @@ def map_pixel(point_x, point_y, cellx, celly, xmin, ymax):
     Example:
             raster = HMISea.tif'
             NDV, xsize, ysize, GeoT, Projection, DataType = GetGeoInfo(raster)
-            col, row = map_pixel(x,y,GeoT[1],GeoT[-1], GeoT[0],GeoT[3])
+            row, col = map_pixel(x,y,GeoT[1],GeoT[-1], GeoT[0],GeoT[3])
     '''
     point_x=np.array(point_x)
     point_y=np.array(point_y)
@@ -231,6 +231,51 @@ class GeoRaster():
         self.bounds = (self.xmin, self.ymin, self.xmax, self.ymax)
         self.projection = projection
         self.datatype=datatype
+
+    def __getitem__(self,indx):
+        return self.raster.__getitem__(indx)
+
+    def __getslice__(self,i,j):
+        return self.raster.__getslice__(i,j)
+
+    def __getattribute__(self, attr):
+        return eval('self.'+attr)
+
+    def __lt__(self,other):
+        if isinstance(other, GeoRaster):
+            return self.raster<other.raster
+        elif isinstance(other, np.ndarray):
+            return self.raster<other
+
+    def __le__(self,other):
+        if isinstance(other, GeoRaster):
+            return self.raster<=other.raster
+        elif isinstance(other, np.ndarray):
+            return self.raster<=other
+
+    def __gt__(self,other):
+        if isinstance(other, GeoRaster):
+            return self.raster>other.raster
+        elif isinstance(other, np.ndarray):
+            return self.raster>other
+
+    def __ge__(self,other):
+        if isinstance(other, GeoRaster):
+            return self.raster>=other.raster
+        elif isinstance(other, np.ndarray):
+            return self.raster>=other
+
+    def __eq__(self,other):
+        if isinstance(other, GeoRaster):
+            return self.raster==other.raster
+        elif isinstance(other, np.ndarray):
+            return self.raster==other
+
+    def __ne__(self,other):
+        if isinstance(other, GeoRaster):
+            return self.raster!=other.raster
+        elif isinstance(other, np.ndarray):
+            return self.raster!=other
 
     def __pos__(self):
         return self
