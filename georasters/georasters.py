@@ -281,7 +281,7 @@ class GeoRaster():
         return self
 
     def __neg__(self):
-        return GeoRaster(-self.raster, self.geot, nodata_value=self.nodata_value)
+        return GeoRaster(-self.raster, self.geot, nodata_value=self.nodata_value, projection = self.projection, datatype = self.datatype)
 
     def __add__(self, other):
         if isinstance(other,GeoRaster):
@@ -290,11 +290,11 @@ class GeoRaster():
                     ndv=self.nodata_value
                 else:
                     ndv=np.nan
-                return GeoRaster(self.raster+other.raster, self.geot, nodata_value=ndv)
+                return GeoRaster(self.raster+other.raster, self.geot, nodata_value=ndv, projection = self.projection, datatype = self.datatype)
             else:
                 raise RasterGeoTError("Rasters must have same geotransform. If needed first create union or allign them.")
         else:
-            return GeoRaster(self.raster+other, self.geot, nodata_value=self.nodata_value)
+            return GeoRaster(self.raster+other, self.geot, self.geot, nodata_value=self.nodata_value, projection = self.projection, datatype = self.datatype)
 
     def __radd__(self, other):
         return self.__add__(other)
@@ -312,11 +312,11 @@ class GeoRaster():
                     ndv=self.nodata_value
                 else:
                     ndv=np.nan
-                return GeoRaster(self.raster*other.raster, self.geot, nodata_value=ndv)
+                return GeoRaster(self.raster*other.raster, self.geot, nodata_value=ndv, projection = self.projection, datatype = self.datatype)
             else:
                 raise RasterGeoTError("Rasters must have same geotransform. If needed first create union or allign them.")
         else:
-            return GeoRaster(self.raster*other, self.geot, nodata_value=self.nodata_value)
+            return GeoRaster(self.raster*other, self.geot, self.geot, nodata_value=self.nodata_value, projection = self.projection, datatype = self.datatype)
 
     def __rmul__(self, other):
         return self.__mul__(other) 
@@ -328,17 +328,17 @@ class GeoRaster():
                     ndv=self.nodata_value
                 else:
                     ndv=np.nan
-                return GeoRaster(self.raster/other.raster, self.geot, nodata_value=ndv)
+                return GeoRaster(self.raster/other.raster, self.geot, nodata_value=ndv, projection = self.projection, datatype = self.datatype)
             else:
                 raise RasterGeoTError("Rasters must have same geotransform. If needed first create union or allign them.")
         else:
-            return GeoRaster(self.raster/other, self.geot, nodata_value=self.nodata_value)
+            return GeoRaster(self.raster/other, self.geot, nodata_value=self.nodata_value, projection = self.projection, datatype = self.datatype)
 
     def __rtruediv__(self, other):
         if isinstance(other,GeoRaster):
             return other.__truediv__(self)
         else:
-            return GeoRaster(other/self.raster, self.geot, nodata_value=self.nodata_value)
+            return GeoRaster(other/self.raster, self.geot, nodata_value=self.nodata_value, projection = self.projection, datatype = self.datatype)
 
     def __floordiv__(self, other):
         A=self/other
@@ -352,11 +352,11 @@ class GeoRaster():
                     ndv=self.nodata_value
                 else:
                     ndv=np.nan
-                return GeoRaster((other.raster/self.raster).astype(int), self.geot, nodata_value=ndv)
+                return GeoRaster((other.raster/self.raster).astype(int), self.geot, nodata_value=ndv, projection = self.projection, datatype = self.datatype)
             else:
                 raise RasterGeoTError("Rasters must have same geotransform. If needed first create union or allign them.")
         else:
-            return GeoRaster((other/self.raster).astype(int), self.geot, nodata_value=self.nodata_value)
+            return GeoRaster((other/self.raster).astype(int), self.geot, nodata_value=self.nodata_value, projection = self.projection, datatype = self.datatype)
 
     def __pow__(self,other):
         if isinstance(other,GeoRaster):
@@ -365,11 +365,11 @@ class GeoRaster():
                     ndv=self.nodata_value
                 else:
                     ndv=np.nan
-                return GeoRaster(self.raster**other.raster, self.geot, nodata_value=ndv)
+                return GeoRaster(self.raster**other.raster, self.geot, nodata_value=ndv, projection = self.projection, datatype = self.datatype)
             else:
                 raise RasterGeoTError("Rasters must have same geotransform. If needed first create union or allign them.")
         else:
-            return GeoRaster(self.raster**other, self.geot, nodata_value=self.nodata_value)
+            return GeoRaster(self.raster**other, self.geot, nodata_value=self.nodata_value, projection = self.projection, datatype = self.datatype)
 
     def to_tiff(self, filename):
         '''
@@ -632,7 +632,8 @@ class GeoRaster():
         col2 = np.abs(radius/self.x_cell_size)
         row2 = np.abs(radius/self.y_cell_size)
         return GeoRaster(self.raster[max(row-row2, 0):min(row+row2+1, self.shape[0]), \
-                        max(col-col2, 0):min(col+col2+1, self.shape[1])], self.geot, nodata_value = self.nodata_value)
+                        max(col-col2, 0):min(col+col2+1, self.shape[1])], self.geot, nodata_value = self.nodata_value,\
+                        projection=self.projection, datatype = self.datatype)
 
     # Align GeoRasters
     def align(self,alignraster,how=np.mean,cxsize=None,cysize=None):
@@ -771,3 +772,19 @@ def align_georasters(raster,alignraster,how=np.mean,cxsize=None,cysize=None):
     else:
         print("Rasters need to be in same projection")
         return (-1,-1)
+
+# Test if two GeoRasters are in same GeoT and have same projection
+def is_geovalid(grasterlist):
+    if np.sum(map(isinstance,grasterlist,[GeoRaster for i in range(len(grasterlist))]))==len(grasterlist):
+        graster0 = grasterlist[-1]
+        while grasterlist !=[]:
+            grasterlist = grasterlist[:-1]
+            graster1 = grasterlist[-1]
+            if graster1.geot == graster0.geot and graster1.projection.ExportToPrettyWkt() == graster0.ExportToPrettyWkt():
+                return 0
+            else:
+                raise RasterGeoTError("Rasters must have same geotransform and projection.")
+                return 1
+    else:
+        raise RasterGeoTError("List must contain only GeoRasters.")
+
