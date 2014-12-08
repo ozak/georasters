@@ -21,16 +21,16 @@ raster = os.path.join(DATA, 'slope.tif')
 def test_main():
     import georasters as gr
     A = gr.from_file(raster)
-    assert A.raster.count() == 6232
+    assert A.raster.count() == 2277587
     assert A.min() == 0
-    assert A.projection.ExportToProj4() == '+proj=aea +lat_1=43 +lat_2=48 +lat_0=34 +lon_0=-120 +x_0=600000 +y_0=0 +ellps=GRS80 +units=m +no_defs '
+    assert A.projection.ExportToProj4() == '+proj=longlat +datum=WGS84 +no_defs '
 
 def test_extract():
     import georasters as gr
     raster = os.path.join(DATA, 'pre1500.tif')
     data = gr.from_file(raster)
     (xmin,xsize,x,ymax,y,ysize)=data.geot
-    (x,y)=(xmin+data.shape[1]/2*xsize, ymax+data.shape[0]/2*ysize)
+    (x,y)=(xmin+2507*xsize, ymax+1425*ysize)
     assert data.raster[gr.map_pixel(x,y,data.x_cell_size,data.y_cell_size,data.xmin,data.ymax)]==data.extract(x,y).max()
     assert data.raster[gr.map_pixel(x,y,data.x_cell_size,data.y_cell_size,data.xmin,data.ymax)]==data.map_pixel(x,y)
 
