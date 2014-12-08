@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
-raster = os.path.join(DATA, 'slope.tif')
+raster = os.path.join(DATA, 'pre1500.tif')
 
 def test_main():
     import georasters as gr
