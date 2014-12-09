@@ -21,7 +21,7 @@ raster = os.path.join(DATA, 'pre1500.tif')
 def test_main():
     import georasters as gr
     A = gr.from_file(raster)
-    assert A.raster.count() == A.count()
+    assert A.count() == 2277587
     assert A.min() == 0
     assert A.projection.ExportToProj4() == '+proj=longlat +datum=WGS84 +no_defs '
 
