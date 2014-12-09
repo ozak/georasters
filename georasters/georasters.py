@@ -182,9 +182,9 @@ def load_tiff(file):
     Usage:
             data=LoadTiffRaster(file)
     """
-    NDV, xsize, ysize, GeoT, Projection, DataType=GetGeoInfo(file)
+    NDV, xsize, ysize, GeoT, Projection, DataType=get_geo_info(file)
     data=gdalnumeric.LoadFile(file)
-    data=np.ma.masked_array(data, mask=data==NDV,fill_value=-np.inf)
+    data=np.ma.masked_array(data, mask=data==NDV,fill_value=NDV)
     return data
 
 class RasterGeoTError(Exception):

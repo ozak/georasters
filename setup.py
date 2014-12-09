@@ -9,7 +9,7 @@ def readme():
         return f.read()
 
 setup(name='georasters',
-      version='0.1.10',
+      version='0.1.11',
       description='Tools for working with Geographical Information System Rasters',
       url='http://github.com/ozak/georasters',
       author='Ömer Özak',
