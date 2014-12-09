@@ -20,6 +20,7 @@ raster = os.path.join(DATA, 'pre1500.tif')
 
 def test_main():
     import georasters as gr
+    raster = os.path.join(DATA, 'pre1500.tif')
     A = gr.from_file(raster)
     assert A.count() == 2277587
     assert A.min() == 0
