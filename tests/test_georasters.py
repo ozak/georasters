@@ -71,10 +71,6 @@ def test_union():
     stats = zonal_stats(df, raster, copy_properties=True, all_touched=True, raster_out=True, opt_georaster=True)
     dfcol=pd.merge(dfcol,pd.DataFrame(data=stats), 
     
-    
-    
-    
-    
     '''
     assert (data1.union(data2).raster==data.raster).sum()==data.count()
 
@@ -83,12 +79,57 @@ def test_stats():
     raster = os.path.join(DATA, 'pre1500.tif')
     data = gr.from_file(raster)
     assert data.argmax() == data.raster.argmax()
+
+def test_stats2():
+    import georasters as gr
+    raster = os.path.join(DATA, 'pre1500.tif')
+    data = gr.from_file(raster)
     assert data.argmin() == data.raster.argmin()
+
+def test_stats3():
+    import georasters as gr
+    raster = os.path.join(DATA, 'pre1500.tif')
+    data = gr.from_file(raster)
     assert data.sum() == data.raster.sum()
+
+def test_stats4():
+    import georasters as gr
+    raster = os.path.join(DATA, 'pre1500.tif')
+    data = gr.from_file(raster)
     assert data.max() == data.raster.max()
+
+def test_stats5():
+    import georasters as gr
+    raster = os.path.join(DATA, 'pre1500.tif')
+    data = gr.from_file(raster)
     assert data.min() == data.raster.min()
+
+def test_stats6():
+    import georasters as gr
+    raster = os.path.join(DATA, 'pre1500.tif')
+    data = gr.from_file(raster)
     assert data.median() == np.ma.median(data.raster)
+
+def test_stats7():
+    import georasters as gr
+    raster = os.path.join(DATA, 'pre1500.tif')
+    data = gr.from_file(raster)
     assert data.std() == data.raster.std()
+
+def test_stats8():
+    import georasters as gr
+    raster = os.path.join(DATA, 'pre1500.tif')
+    data = gr.from_file(raster)
     assert data.var() == data.raster.var()
+
+def test_stats9():
+    import georasters as gr
+    raster = os.path.join(DATA, 'pre1500.tif')
+    data = gr.from_file(raster)
     assert data.prod() == data.raster.prod()
+
+def test_stats10():
+    import georasters as gr
+    raster = os.path.join(DATA, 'pre1500.tif')
+    data = gr.from_file(raster)
     assert data.count() == data.raster.count()

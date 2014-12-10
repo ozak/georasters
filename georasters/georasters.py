@@ -83,11 +83,7 @@ def aggregate(raster,NDV,block_size):
             costs = load_tiff(raster)
             costs2=aggregate(costs,NDV,(10,10))
     '''
-    raster2=np.where(raster==NDV,0,raster)
-    raster3=block_reduce(raster2,block_size,func=np.sum)
-    raster2=np.where(raster==NDV,NDV,0)
-    raster4=block_reduce(raster2,block_size,func=np.sum)
-    raster2=np.where(raster4<0,NDV,raster3)
+    raster2=block_reduce(raster2,block_size,func=np.ma.sum)
     return raster2
 
 # Function to write a new file.
@@ -238,8 +234,8 @@ class GeoRaster():
     def __getslice__(self,i,j):
         return self.raster.__getslice__(i,j)
 
-    def __getattribute__(self, attr):
-        return eval('self.'+attr)
+#    def __getattribute__(self, attr):
+#        return eval('self.'+attr)
 
     def __lt__(self,other):
         if isinstance(other, GeoRaster):
@@ -638,15 +634,32 @@ class GeoRaster():
     # Align GeoRasters
     def align(self,alignraster,how=np.mean,cxsize=None,cysize=None):
         '''
-        Align two rasters so that data overlaps by geographical location
-        Usage: (alignedraster_o, alignedraster_a) = AlignRasters(raster, alignraster, how=np.mean)
-        where 
-            raster: string with location of raster to be aligned
-            alignraster: string with location of raster to which raster will be aligned
-            how: function used to aggregate cells (if the rasters have different sizes)
-        It is assumed that both rasters have the same size
+        geo.align(geo2, how=np.mean)
+
+        Returns both georasters aligned and with the same pixelsize
         '''
         return align_georasters(self,alignraster,how=how,cxsize=cxsize,cysize=cysize)
+
+    def aggregate(self,block_size):
+        '''
+        geo.aggregate(block_size)
+
+        Returns copy of raster aggregated to smaller resolution, by adding cells.
+        '''
+        raster2=block_reduce(self.raster,block_size,func=np.ma.sum)
+        return GeoRaster(raster2, self.geot, nodata_value=self.nodata_value,\
+                        projection=self.projection, datatype = self.datatype)
+
+    def block_reduce(self,block_size, how=np.ma.mean):
+        '''
+        geo.block_reduce(block_size, how=func)
+
+        Returns copy of raster aggregated to smaller resolution, by adding cells.
+        Default: func=np.ma.mean
+        '''
+        raster2=block_reduce(self.raster,block_size,func=how)
+        return GeoRaster(raster2, self.geot, nodata_value=self.nodata_value,\
+                        projection=self.projection, datatype = self.datatype)
 
 # Union of rasters
 def union(rasters):
