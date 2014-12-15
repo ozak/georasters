@@ -31,6 +31,7 @@ import numpy as np
 from osgeo import gdal, gdalnumeric, ogr, osr, gdal_array
 from gdalconst import *
 from skimage.measure import block_reduce
+from skimage.transform import resize
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -207,7 +208,7 @@ class GeoRaster():
         Usage:
             geo=GeoRaster(raster, geot, nodata_value = ndv)
         where
-            raster: Numpy masked array with the raster data, which could be loaded with the load_tiff(file)
+            raster: Numpy masked array with the raster data, which could be loaded with from_file(file) or load_tiff(file)
             geot: GDAL Geotransformation
             nodata_value: No data value in raster, optional
         '''
@@ -658,6 +659,18 @@ class GeoRaster():
         Default: func=np.ma.mean
         '''
         raster2=block_reduce(self.raster,block_size,func=how)
+        return GeoRaster(raster2, self.geot, nodata_value=self.nodata_value,\
+                        projection=self.projection, datatype = self.datatype)
+
+    def resize(self, block_size, order=0, mode='constant', cval=self.nodata_value):
+        '''
+        geo.resize(bock_size, order=0, mode='constant', cval=self.nodata_value)
+        
+        Returns resized georaster
+        '''
+        raster2=resize(self.raster,block_size,order=order, mode=mode, cval=cval)
+        mask=resize(self.raster.mask,block_size,order=order, mode=mode, cval=cval)
+        raster2=np.ma.masked_arrey(raster2, mask=mask, fill_value=self.raster.fill_value)
         return GeoRaster(raster2, self.geot, nodata_value=self.nodata_value,\
                         projection=self.projection, datatype = self.datatype)
 
