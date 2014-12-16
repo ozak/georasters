@@ -674,6 +674,7 @@ class GeoRaster():
             raster2=(self.raster-self.min())/(self.max()-self.min())
         else:
             raster2=self.raster.copy()
+        raster2=raster2.astype(float)
         raster2[self.raster.mask]=np.nan
         raster2=resize(raster2,block_size,order=order, mode=mode, cval=cval)
         raster2=np.ma.masked_array(raster2, mask=np.isnan(raster2), fill_value=self.raster.fill_value)
