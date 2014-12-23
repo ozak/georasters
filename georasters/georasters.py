@@ -662,9 +662,9 @@ class GeoRaster():
         return GeoRaster(raster2, self.geot, nodata_value=self.nodata_value,\
                         projection=self.projection, datatype = self.datatype)
 
-    def resize(self, block_size, order=0, mode='constant', cval=False):
+    def resize(self, block_size, order=0, mode='constant', cval=False, preserve_range=True):
         '''
-        geo.resize(new_shape, order=0, mode='constant', cval=np.nan)
+        geo.resize(new_shape, order=0, mode='constant', cval=np.nan, preserve_range=True)
         
         Returns resized georaster
         '''
@@ -676,7 +676,7 @@ class GeoRaster():
             raster2=self.raster.copy()
         raster2=raster2.astype(float)
         raster2[self.raster.mask]=np.nan
-        raster2=resize(raster2,block_size,order=order, mode=mode, cval=cval)
+        raster2=resize(raster2,block_size,order=order, mode=mode, cval=cval, preserve_range=preserve_range)
         raster2=np.ma.masked_array(raster2, mask=np.isnan(raster2), fill_value=self.raster.fill_value)
         raster2=raster2*(self.max()-self.min())+self.min()
         raster2[raster2.mask]=self.nodata_value
