@@ -190,6 +190,10 @@ class RasterGeoTError(Exception):
 class RasterGeoError(Exception):
     pass
 
+class RasterGeoTWarning(Exception):
+    pass
+
+
 # GeoRaster Class
 class GeoRaster():
     '''
@@ -282,14 +286,13 @@ class GeoRaster():
 
     def __add__(self, other):
         if isinstance(other,GeoRaster):
-            if self.geot==other.geot:
-                if self.nodata_value==other.nodata_value:
-                    ndv=self.nodata_value
-                else:
-                    ndv=np.nan
-                return GeoRaster(self.raster+other.raster, self.geot, nodata_value=ndv, projection = self.projection, datatype = self.datatype)
+            if self.geot!=other.geot:
+                raise RasterGeoTWarning("Rasters do not have same geotransform. If needed first create union or allign them.")
+            if self.nodata_value==other.nodata_value:
+                ndv=self.nodata_value
             else:
-                raise RasterGeoTError("Rasters must have same geotransform. If needed first create union or allign them.")
+                ndv=np.nan
+            return GeoRaster(self.raster+other.raster, self.geot, nodata_value=ndv, projection = self.projection, datatype = self.datatype)
         else:
             return GeoRaster(self.raster+other, self.geot, self.geot, nodata_value=self.nodata_value, projection = self.projection, datatype = self.datatype)
 
@@ -304,14 +307,13 @@ class GeoRaster():
 
     def __mul__(self, other):
         if isinstance(other,GeoRaster):
-            if self.geot==other.geot:
-                if self.nodata_value==other.nodata_value:
-                    ndv=self.nodata_value
-                else:
-                    ndv=np.nan
-                return GeoRaster(self.raster*other.raster, self.geot, nodata_value=ndv, projection = self.projection, datatype = self.datatype)
+            if self.geot!=other.geot:
+                raise RasterGeoTWarning("Rasters do not have same geotransform. If needed first create union or allign them.")
+            if self.nodata_value==other.nodata_value:
+                ndv=self.nodata_value
             else:
-                raise RasterGeoTError("Rasters must have same geotransform. If needed first create union or allign them.")
+                ndv=np.nan
+            return GeoRaster(self.raster*other.raster, self.geot, nodata_value=ndv, projection = self.projection, datatype = self.datatype)
         else:
             return GeoRaster(self.raster*other, self.geot, self.geot, nodata_value=self.nodata_value, projection = self.projection, datatype = self.datatype)
 
@@ -320,14 +322,13 @@ class GeoRaster():
 
     def __truediv__(self, other):
         if isinstance(other,GeoRaster):
-            if self.geot==other.geot:
-                if self.nodata_value==other.nodata_value:
-                    ndv=self.nodata_value
-                else:
-                    ndv=np.nan
-                return GeoRaster(self.raster/other.raster, self.geot, nodata_value=ndv, projection = self.projection, datatype = self.datatype)
+            if self.geot!=other.geot:
+                raise RasterGeoTWarning("Rasters do not have same geotransform. If needed first create union or allign them.")
+            if self.nodata_value==other.nodata_value:
+                ndv=self.nodata_value
             else:
-                raise RasterGeoTError("Rasters must have same geotransform. If needed first create union or allign them.")
+                ndv=np.nan
+            return GeoRaster(self.raster/other.raster, self.geot, nodata_value=ndv, projection = self.projection, datatype = self.datatype)
         else:
             return GeoRaster(self.raster/other, self.geot, nodata_value=self.nodata_value, projection = self.projection, datatype = self.datatype)
 
@@ -344,27 +345,25 @@ class GeoRaster():
 
     def __rfloordiv__(self, other):
         if isinstance(other,GeoRaster):
-            if self.geot==other.geot:
-                if self.nodata_value==other.nodata_value:
-                    ndv=self.nodata_value
-                else:
-                    ndv=np.nan
-                return GeoRaster((other.raster/self.raster).astype(int), self.geot, nodata_value=ndv, projection = self.projection, datatype = self.datatype)
+            if self.geot!=other.geot:
+                raise RasterGeoTWarning("Rasters do not have same geotransform. If needed first create union or allign them.")
+            if self.nodata_value==other.nodata_value:
+                ndv=self.nodata_value
             else:
-                raise RasterGeoTError("Rasters must have same geotransform. If needed first create union or allign them.")
+                ndv=np.nan
+            return GeoRaster((other.raster/self.raster).astype(int), self.geot, nodata_value=ndv, projection = self.projection, datatype = self.datatype)
         else:
             return GeoRaster((other/self.raster).astype(int), self.geot, nodata_value=self.nodata_value, projection = self.projection, datatype = self.datatype)
 
     def __pow__(self,other):
         if isinstance(other,GeoRaster):
-            if self.geot==other.geot:
-                if self.nodata_value==other.nodata_value:
-                    ndv=self.nodata_value
-                else:
-                    ndv=np.nan
-                return GeoRaster(self.raster**other.raster, self.geot, nodata_value=ndv, projection = self.projection, datatype = self.datatype)
+            if self.geot!=other.geot:
+                raise RasterGeoTWarning("Rasters do not have same geotransform. If needed first create union or allign them.")
+            if self.nodata_value==other.nodata_value:
+                ndv=self.nodata_value
             else:
-                raise RasterGeoTError("Rasters must have same geotransform. If needed first create union or allign them.")
+                ndv=np.nan
+            return GeoRaster(self.raster**other.raster, self.geot, nodata_value=ndv, projection = self.projection, datatype = self.datatype)
         else:
             return GeoRaster(self.raster**other, self.geot, nodata_value=self.nodata_value, projection = self.projection, datatype = self.datatype)
 
