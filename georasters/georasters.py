@@ -669,13 +669,31 @@ class GeoRaster():
         '''
         if not cval:
             cval=np.nan
+        raster2=resize(self.raster.data, block_size, order=order, mode=mode, cval=cval, preserve_range=preserve_range)
+        mask=resize(self.raster.mask, block_size, order=order, mode=mode, cval=cval, preserve_range=preserve_range)
+        raster2=np.ma.masked_array(raster2, mask=mask, fill_value=self.raster.fill_value)
+        raster2[raster2.mask]=self.nodata_value
+        raster2.mask=raster2.data==self.nodata_value
+        geot=list(self.geot)
+        [geot[-1],geot[1]]=np.array([geot[-1],geot[1]])*self.shape/block_size
+        return GeoRaster(raster2, tuple(geot), nodata_value=self.nodata_value,\
+                        projection=self.projection, datatype = self.datatype)
+
+    def resize_old(self, block_size, order=0, mode='constant', cval=False):
+        '''
+        geo.resize(new_shape, order=0, mode='constant', cval=np.nan, preserve_range=True)
+        
+        Returns resized georaster
+        '''
+        if not cval:
+            cval=np.nan
         if self.raster.dtype.name.find('float')!=-1 and np.max(np.abs([self.max(),self.min()]))>1:
             raster2=(self.raster-self.min())/(self.max()-self.min())
         else:
             raster2=self.raster.copy()
         raster2=raster2.astype(float)
         raster2[self.raster.mask]=np.nan
-        raster2=resize(raster2,block_size,order=order, mode=mode, cval=cval, preserve_range=preserve_range)
+        raster2=resize(raster2,block_size, order=order, mode=mode, cval=cval)
         raster2=np.ma.masked_array(raster2, mask=np.isnan(raster2), fill_value=self.raster.fill_value)
         raster2=raster2*(self.max()-self.min())+self.min()
         raster2[raster2.mask]=self.nodata_value
