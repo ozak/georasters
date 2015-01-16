@@ -3,6 +3,6 @@ pandas
 docopt
 GDAL
 pyproj
-scikit-image
+git+https://github.com/scikit-image/scikit-image.git
 matplotlib
 coverage
