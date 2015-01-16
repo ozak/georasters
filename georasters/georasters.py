@@ -294,7 +294,7 @@ class GeoRaster():
                 ndv=np.nan
             return GeoRaster(self.raster+other.raster, self.geot, nodata_value=ndv, projection = self.projection, datatype = self.datatype)
         else:
-            return GeoRaster(self.raster+other, self.geot, self.geot, nodata_value=self.nodata_value, projection = self.projection, datatype = self.datatype)
+            return GeoRaster(self.raster+other, self.geot, nodata_value=self.nodata_value, projection = self.projection, datatype = self.datatype)
 
     def __radd__(self, other):
         return self.__add__(other)
@@ -315,7 +315,7 @@ class GeoRaster():
                 ndv=np.nan
             return GeoRaster(self.raster*other.raster, self.geot, nodata_value=ndv, projection = self.projection, datatype = self.datatype)
         else:
-            return GeoRaster(self.raster*other, self.geot, self.geot, nodata_value=self.nodata_value, projection = self.projection, datatype = self.datatype)
+            return GeoRaster(self.raster*other, self.geot, nodata_value=self.nodata_value, projection = self.projection, datatype = self.datatype)
 
     def __rmul__(self, other):
         return self.__mul__(other) 
