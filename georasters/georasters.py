@@ -386,6 +386,7 @@ class GeoRaster():
                 else:
                     self.raster = self.raster.astype(np.float64)
                     self.datatype = gdal_array.NumericTypeCodeToGDALTypeCode(self.raster.data.dtype)
+        self.raster.data[self.raster.mask] = self.nodata_value
         create_geotiff(filename, self.raster, gdal.GetDriverByName('GTiff'), self.nodata_value, self.shape[1], self.shape[0], self.geot, self.projection, self.datatype)
 
     def plot(self):
