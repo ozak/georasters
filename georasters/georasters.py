@@ -648,7 +648,9 @@ class GeoRaster():
         Returns copy of raster aggregated to smaller resolution, by adding cells.
         '''
         raster2=block_reduce(self.raster,block_size,func=np.ma.sum)
-        return GeoRaster(raster2, self.geot, nodata_value=self.nodata_value,\
+        geot = self.geot
+        geot = (geot[0], block_size[0] * geot[1], geot[2], geot[3],geot[4], block_size[1] * geot[-1])
+        return GeoRaster(raster2, geot, nodata_value=self.nodata_value,\
                         projection=self.projection, datatype = self.datatype)
 
     def block_reduce(self,block_size, how=np.ma.mean):
@@ -731,10 +733,14 @@ def union(rasters):
         latmax = max([i.ymax for i in rasters])
         shape = (np.abs(np.round((latmax-latmin)/rasters[0].y_cell_size)).astype(int),np.round((lonmax-lonmin)/rasters[0].x_cell_size).astype(int))
         out = ndv*np.ones(shape)
+        outmask = np.ones(shape).astype(bool)
         for i in rasters:
             (row,col) = map_pixel(i.xmin, i.ymax, rasters[0].x_cell_size, rasters[0].y_cell_size, lonmin, latmax)
             out[row:row+i.shape[0],col:col+i.shape[1]] = np.where(i.raster.data!=i.nodata_value, i.raster.data,\
                                                          out[row:row+i.shape[0],col:col+i.shape[1]])#i.raster
+            outmask[row:row+i.shape[0],col:col+i.shape[1]] = np.where(i.raster.mask==False, False,\
+                                                         outmask[row:row+i.shape[0],col:col+i.shape[1]])#i.raster
+        out=np.ma.masked_array(out, mask=outmask, fill_value=ndv)
         return GeoRaster(out, (lonmin, rasters[0].x_cell_size, 0.0, latmax, 0.0, rasters[0].y_cell_size), nodata_value=ndv, projection=projection, datatype=datatype)
     else:
         raise RasterGeoError('Rasters need to have same pixel sizes. Use the aggregate or dissolve functions to generate correct GeoRasters')
