@@ -29,7 +29,7 @@ before_install:
 env:
   - GDAL_DATA=/usr/share/gdal/1.10/
 install:
-  - conda create --yes -n env_name python=$TRAVIS_PYTHON_VERSION pip nose cython numpy matplotlib pandas gdal
+  - conda create --yes -n env_name python=$TRAVIS_PYTHON_VERSION pip nose cython numpy matplotlib pandas gdal scipy
   - source activate env_name
   - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then conda install --yes imaging; else pip install pillow; fi
   - pip install pytest  # not yet available for py3 in anaconda 
