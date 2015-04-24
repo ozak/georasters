@@ -389,6 +389,14 @@ class GeoRaster():
         self.raster.data[self.raster.mask] = self.nodata_value
         create_geotiff(filename, self.raster, gdal.GetDriverByName('GTiff'), self.nodata_value, self.shape[1], self.shape[0], self.geot, self.projection, self.datatype)
 
+    def to_pandas(self):
+        """
+        Convert GeoRaster to Pandas DataFrame, which can be easily exported to other types of files
+        The DataFrame has the row, col, value, x, and y values for each cell
+        """
+        df = to_pandas(self)
+        return df
+
     def plot(self):
         '''
         geo.plot()
@@ -765,6 +773,36 @@ def from_file(filename):
     data = np.ma.masked_array(data, mask=data==NDV,fill_value=NDV)
     return GeoRaster(data,GeoT, nodata_value=NDV, projection=Projection, datatype=DataType)
 
+# Convert Pandas DataFrame to raster
+def from_pandas(df, value='value', x='x', y='y', cellx= None, celly=None, xmin=None, ymax=None,
+                GeoT=None, nodata_value=None, projection=None, datatype=None):
+    """
+    Creates a GeoRaster from a Pandas DataFrame. Useful to plot or export data to rasters.
+    Usage:
+        raster = from_pandas(df, value='value', x='x', y='y', cellx= cellx, celly=celly, xmin=xmin, ymax=ymax,
+                        GeoT=GeoT, nodata_value=NDV, projection=Projection, datatype=DataType)
+
+    Although it does not require all the inputs, it is highly recommended to include the geographical information, 
+    so that the GeoRaster is properly constructed. As usual, the information can be added afterwards directly to the 
+    GeoRaster.
+    """
+    if not cellx:
+        cellx = (df.sort(x)[x]-df.sort(x).shift(1)[x]).max()
+    if not celly:
+        celly = (df.sort(y, ascending=False)[y]-df.sort(y, ascending=False).shift(1)[y]).min()
+    if not xmin:
+        xmin = df[x].min()
+    if not ymax:
+        ymax = df[y].max()
+    row,col = map_pixel(df[x], df[y], cellx, celly, xmin, ymax)
+    dfout = pd.DataFrame(np.array([row, col,df.value]).T, columns=['row','col','value'])
+    dfout = dfout.set_index(['row','col']).unstack().values
+    if nodata_value:
+        dfout[np.isnan(dfout)]=nodata_value
+    if not nodata_value:
+        nodata_value=np.nan
+    return GeoRaster(dfout, GeoT, nodata_value=nodata_value, projection=projection, datatype=datatype)
+
 # GDAL conversion types
 NP2GDAL_CONVERSION = {
   "uint8": 1,
@@ -849,4 +887,21 @@ def is_geovalid(grasterlist):
                 return 1
     else:
         raise RasterGeoTError("List must contain only GeoRasters.")
+
+# Convert GeoRaster to Pandas DataFrame, which can be easily exported to other types of files
+# Function to
+def to_pandas(raster):
+    """
+    Convert GeoRaster to Pandas DataFrame, which can be easily exported to other types of files
+    The DataFrame has the row, col, value, x, and y values for each cell
+    Usage:
+        df = gr.to_pandas(raster)
+    """
+    df = pd.DataFrame(raster.raster)
+    df = df.stack()
+    df = df.reset_index()
+    df.columns = ['row','col','value']
+    df['x'] = df.col.apply(lambda col: raster.geot[0]+(col)*raster.geot[1])
+    df['y'] = df.row.apply(lambda row: raster.geot[3]+(row)*raster.geot[-1])
+    return df
 
