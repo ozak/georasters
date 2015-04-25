@@ -801,6 +801,8 @@ def from_pandas(df, value='value', x='x', y='y', cellx= None, celly=None, xmin=N
         dfout[np.isnan(dfout)]=nodata_value
     if not nodata_value:
         nodata_value=np.nan
+    if not GeoT:
+        GeoT = (xmin, cellx, 0, ymax, 0, celly)
     return GeoRaster(dfout, GeoT, nodata_value=nodata_value, projection=projection, datatype=datatype)
 
 # GDAL conversion types
