@@ -62,11 +62,28 @@ def map_pixel(point_x, point_y, cellx, celly, xmin, ymax):
             NDV, xsize, ysize, GeoT, Projection, DataType = GetGeoInfo(raster)
             row, col = map_pixel(x,y,GeoT[1],GeoT[-1], GeoT[0],GeoT[3])
     '''
-    point_x=np.array(point_x)
-    point_y=np.array(point_y)
+    point_x=np.asarray(point_x)
+    point_y=np.asarray(point_y)
     col = np.around((point_x - xmin) / cellx).astype(int)
     row = np.around((point_y - ymax) / celly).astype(int)
     return row,col
+
+def map_pixel_inv(row, col, cellx, celly, xmin, ymax):
+    '''
+    Usage: map_pixel(xcoord, ycoord, x_cell_size, y_cell_size, xmin, ymax)
+    where: 
+            xmin is leftmost X coordinate in system
+            ymax is topmost Y coordinate in system
+    Example:
+            raster = HMISea.tif'
+            NDV, xsize, ysize, GeoT, Projection, DataType = GetGeoInfo(raster)
+            row, col = map_pixel(x,y,GeoT[1],GeoT[-1], GeoT[0],GeoT[3])
+    '''
+    col=np.asarray(col)
+    row=np.asarray(row)
+    point_x = xmin+col*cellx 
+    point_y = ymax+row*celly
+    return point_x, point_y
 
 # Aggregate raster to higher resolution using sums
 def aggregate(raster,NDV,block_size):
@@ -625,6 +642,15 @@ class GeoRaster():
         '''
         row, col =map_pixel(point_x, point_y, self.x_cell_size, self.y_cell_size, self.xmin, self.ymax)
         return self.raster[row, col]
+
+    def map_pixel_location(self, point_x, point_y):
+        '''
+        geo.map_pixel(point_x, point_y)
+        
+        Return value of raster in location 
+        '''
+        row, col =map_pixel(point_x, point_y, self.x_cell_size, self.y_cell_size, self.xmin, self.ymax)
+        return np.array([row, col])
 
     def extract(self, point_x, point_y, radius=0):
         '''
