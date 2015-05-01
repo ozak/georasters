@@ -212,7 +212,7 @@ class RasterGeoTWarning(Exception):
 
 
 # GeoRaster Class
-class GeoRaster():
+class GeoRaster(object):
     '''
     GeoRaster class to create and handle GIS rasters
     Eash GeoRaster object is a numpy masked array + geotransfrom + nodata_value
@@ -233,6 +233,7 @@ class GeoRaster():
             geot: GDAL Geotransformation
             nodata_value: No data value in raster, optional
         '''
+        super(GeoRaster, self).__init__()
         if isinstance(raster, np.ma.core.MaskedArray):
             self.raster = raster
         else:
@@ -383,6 +384,10 @@ class GeoRaster():
             return GeoRaster(self.raster**other.raster, self.geot, nodata_value=ndv, projection = self.projection, datatype = self.datatype)
         else:
             return GeoRaster(self.raster**other, self.geot, nodata_value=self.nodata_value, projection = self.projection, datatype = self.datatype)
+
+    def copy(self):
+        """Returns copy of itself"""
+        return GeoRaster(self.raster, self.geot, nodata_value = self.nodata_value, projection = self.projection, datatype=self.datatype)
 
     def to_tiff(self, filename):
         '''
