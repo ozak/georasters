@@ -34,6 +34,7 @@ from skimage.measure import block_reduce
 from skimage.transform import resize
 import matplotlib.pyplot as plt
 import pandas as pd
+from fiona.crs import from_string
 
 # Function to read the original file's projection:
 def get_geo_info(FileName):
@@ -417,6 +418,15 @@ class GeoRaster(object):
         The DataFrame has the row, col, value, x, and y values for each cell
         """
         df = to_pandas(self)
+        return df
+
+    def to_geopandas(self):
+        """
+        Convert GeoRaster to GeoPandas DataFrame, which can be easily exported to other types of files and used to 
+        do other types of operations.
+        The DataFrame has the geometry (Polygon), row, col, value, x, and y values for each cell
+        """
+        df = to_geopandas(self)
         return df
 
     def plot(self):
@@ -938,3 +948,22 @@ def to_pandas(raster):
     df['y'] = df.row.apply(lambda row: raster.geot[3]+(row)*raster.geot[-1])
     return df
 
+# Convert GeoRaster to GeoPandas
+def squares(row, georaster=None):
+    geometry = Polygon([(row.x,row.y),(row.x+georaster.x_cell_size,row.y),
+                       (row.x+georaster.x_cell_size,row.y+georaster.y_cell_size),
+                       (row.x,row.y+georaster.y_cell_size)])
+    return geometry
+
+def to_geopandas(raster):
+    """
+    Convert GeoRaster to GeoPandas DataFrame, which can be easily exported to other types of files and used to 
+    do other types of operations.
+    The DataFrame has the geometry (Polygon), row, col, value, x, and y values for each cell
+    Usage:
+        df = gr.to_geopandas(raster)
+    """
+    df = to_pandas(raster)
+    df['geometry'] = df.apply(squares, georaster=raster, axis=1)
+    df = gp.GeoDataFrame(df, crs=from_string(raster.projection.ExportToProj4()))
+    return df
