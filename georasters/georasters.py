@@ -32,6 +32,7 @@ from osgeo import gdal, gdalnumeric, ogr, osr, gdal_array
 from gdalconst import *
 from skimage.measure import block_reduce
 from skimage.transform import resize
+import skimage.graph as graph
 import matplotlib.pyplot as plt
 import pandas as pd
 from fiona.crs import from_string
@@ -251,6 +252,7 @@ class GeoRaster(object):
         self.bounds = (self.xmin, self.ymin, self.xmax, self.ymax)
         self.projection = projection
         self.datatype=datatype
+        self.mcp_cost=None
 
     def __getitem__(self,indx):
         return self.raster.__getitem__(indx)
@@ -754,6 +756,96 @@ class GeoRaster(object):
         [geot[-1],geot[1]]=np.array([geot[-1],geot[1]])*self.shape/block_size
         return GeoRaster(raster2, tuple(geot), nodata_value=self.nodata_value,\
                         projection=self.projection, datatype = self.datatype)
+
+    # Setup Graph for distance computations and provide distance functions
+    def mcp(self, *args, **kwargs):
+        """
+        Setup MCP_Geometric object from skimage for optimal travel time computations
+        """
+        # Create Cost surface to work on
+        self.mcp_cost=graph.MCP_Geometric(self.raster, *args, **kwargs)
+    pass
+
+    # Determine minimum travel cost to each location 
+    def distance(self, sources, destinations, x='x', y='y', isolation=True, export_raster=False, export_shape=False, routes=False, path='./'):
+        """
+        Compute cost distance measured from each start point to all end points.
+        The function returns the distances between the start point and the end points as a Pandas dataframe.
+        Additionally, for each start point it computes the level of isolation, i.e. its average travel distance to 
+        all other locations
+        """
+        start_points=sources.copy()
+        end_points=destinations.copy()
+        if not isinstance(start_points,pd.core.frame.DataFrame) and not isinstance(start_points,gp.geodataframe.GeoDataFrame):
+            raise TypeError('Sources has to be a (Geo)Pandas Data Frame Object.')
+        if not isinstance(end_points,pd.core.frame.DataFrame) and not isinstance(end_points,gp.geodataframe.GeoDataFrame):
+            raise TypeError('Destinations has to be a (Geo)Pandas Data Frame Object.')
+        if not self.mcp_cost:
+            self.mcp()
+        count=0
+        start_points['row'], start_points['col'] = self.map_pixel_location(start_points[x], start_points[y])
+        end_points['row'], end_points['col'] = self.map_pixel_location(end_points[x], end_points[y])
+        start_points['ID']=start_points.index.values
+        end_points['ID']=end_points.index.values+start_points['ID'].max()+1
+        
+        for i in start_points.iterrows():
+            cumulative_costs, traceback = self.mcp_cost.find_costs([[i[1].row,i[1].col]])
+            dist=cumulative_costs[end_points.row.values,end_points.col.values].transpose()/(7*24)
+            df2=pd.DataFrame(np.array([(i[1]['ID']*np.ones_like(dist)).flatten(),
+                                    end_points['ID'],dist.flatten()]).transpose(), 
+                                    columns=['ID1','ID2','dist'])
+            # Keep only locations that are accessible
+            df2 = df2.loc[df2['dist']<np.inf]
+            if isolation:
+                grisolation = np.ma.masked_array(cumulative_costs, mask = np.logical_or(self.raster.mask, cumulative_costs==np.inf)
+                                    , fill_value=np.nan).mean()/(7*24)
+                start_points.loc[i[0],'Iso'] = grisolation
+            if export_raster:
+                cumulative_costs = gr.GeoRaster(np.ma.masked_array(cumulative_costs, 
+                                                    mask = np.logical_or(self.raster.mask, cumulative_costs==np.inf), 
+                                                    fill_value = np.nan), self.geot, self.nodata_value, 
+                                                    projection=self.projection, datatype = self.datatype)
+                cumulative_costs.raster.data[cumulative_costs.raster.mask] = cumulative_costs.nodata_value
+                cumulative_costs.to_tiff(path+str(i[1]['ID']))
+            if df2.size>0:
+                if export_shape:
+                    routes=True
+                if routes:
+                    df2['geometry'] = df2['ID2'].apply(lambda x: 
+                                                self.mcp_cost.traceback(end_points.loc[end_points['ID']==x][['row','col']].values[0]))
+                    df2['geometry'] = df2.geometry.apply(lambda x: [gr.map_pixel_inv(y[0],y[1], self.geot[1], 
+                                                    self.geot[-1], self.geot[0], self.geot[-3]) for y in x])
+                    df2['geometry'] = df2.geometry.apply(lambda x: LineString(x) if int(len(x)>1) else LineString([x[0],x[0]]))
+                    df2 = gp.GeoDataFrame(df2, crs = cea)
+                if isolation:
+                    df2['Iso'] = grisolation
+                if count==0:
+                    self.grdist=df2.copy()
+                else:
+                    self.grdist=self.grdist.append(df2)
+                count+=1
+        if routes:
+            self.grdist = gp.GeoDataFrame(self.grdist, crs = cea)
+        if export_shape:
+            start_pointscols = sources.columns.values
+            end_pointscols = destinations.columns.values
+            if 'geometry' in end_pointscols:
+                self.grdist = pd.merge(self.grdist, end_points[['ID']+end_pointscols.tolist()].drop('geometry', axis=1), left_on='ID2', right_on='ID', how='left')
+            else:
+                self.grdist = pd.merge(self.grdist, end_points[['ID']+end_pointscols.tolist()], left_on='ID2', right_on='ID', how='left')
+            if 'geometry' in self.start_pointscols:
+                self.grdist = pd.merge(self.grdist, start_points[['ID']+start_pointscols.tolist()].drop('geometry', axis=1), left_on='ID1', right_on='ID', how='left',
+                             suffixes = ['_2','_1'])
+            else:
+                self.grdist = pd.merge(self.grdist, start_points[['ID']+start_pointscols.tolist()], left_on='ID1', right_on='ID', how='left',
+                             suffixes = ['_2','_1'])
+            self.grdist = gp.GeoDataFrame(self.grdist, crs = cea)
+            self.grdist.to_file(path+'routes.shp')
+    pass
+
+##########################################
+# Useful functions defined on GeoRasters
+##########################################
 
 # Union of rasters
 def union(rasters):
