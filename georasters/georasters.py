@@ -36,6 +36,7 @@ import skimage.graph as graph
 import matplotlib.pyplot as plt
 import pandas as pd
 from fiona.crs import from_string
+import geopandas as gp
 
 # Function to read the original file's projection:
 def get_geo_info(FileName):

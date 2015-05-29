@@ -7,3 +7,4 @@ git+https://github.com/scikit-image/scikit-image.git
 matplotlib
 coverage
 fiona
+geopandas
