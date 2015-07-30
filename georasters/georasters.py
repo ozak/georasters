@@ -864,6 +864,8 @@ def union(rasters):
             ndv=rasters[0].nodata_value
         else:
             ndv = np.nan
+        if ndv==None:
+            ndv = np.nan
         if sum([rasters[0].datatype==i.datatype for i in rasters])==len(rasters):
             datatype=rasters[0].datatype
         else:
