@@ -728,7 +728,7 @@ class GeoRaster(object):
         mask=resize(self.raster.mask, block_size, order=order, mode=mode, cval=cval, preserve_range=preserve_range)
         raster2=np.ma.masked_array(raster2, mask=mask, fill_value=self.raster.fill_value)
         raster2[raster2.mask]=self.nodata_value
-        raster2.mask=raster2.data==self.nodata_value
+        raster2.mask=np.logical_or(np.isnan(raster2.data),raster2.data==self.nodata_value)
         geot=list(self.geot)
         [geot[-1],geot[1]]=np.array([geot[-1],geot[1]])*self.shape/block_size
         return GeoRaster(raster2, tuple(geot), nodata_value=self.nodata_value,\
@@ -752,7 +752,7 @@ class GeoRaster(object):
         raster2=np.ma.masked_array(raster2, mask=np.isnan(raster2), fill_value=self.raster.fill_value)
         raster2=raster2*(self.max()-self.min())+self.min()
         raster2[raster2.mask]=self.nodata_value
-        raster2.mask=raster2.data==self.nodata_value
+        raster2.mask=np.logical_or(np.isnan(raster2.data),raster2.data==self.nodata_value)
         geot=list(self.geot)
         [geot[-1],geot[1]]=np.array([geot[-1],geot[1]])*self.shape/block_size
         return GeoRaster(raster2, tuple(geot), nodata_value=self.nodata_value,\
