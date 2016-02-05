@@ -67,8 +67,8 @@ def map_pixel(point_x, point_y, cellx, celly, xmin, ymax):
     '''
     point_x=np.asarray(point_x)
     point_y=np.asarray(point_y)
-    col = np.around((point_x - xmin) / cellx).astype(int)
-    row = np.around((point_y - ymax) / celly).astype(int)
+    col = np.floor((point_x - xmin) / cellx).astype(int)
+    row = np.floor((point_y - ymax) / celly).astype(int)
     return row,col
 
 def map_pixel_inv(row, col, cellx, celly, xmin, ymax):
@@ -129,7 +129,7 @@ def create_geotiff(Name, Array, driver, NDV, xsize, ysize, GeoT, Projection, Dat
     return NewFileName
 
 # Function to aggregate and align rasters
-def align_rasters(raster,alignraster,how=np.mean,cxsize=None,cysize=None,masked=False):
+def align_rasters(raster,alignraster,how=np.ma.mean,cxsize=None,cysize=None,masked=False):
     '''
     Align two rasters so that data overlaps by geographical location
     Usage: (alignedraster_o, alignedraster_a, GeoT_a) = AlignRasters(raster, alignraster, how=np.mean)
