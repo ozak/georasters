@@ -73,24 +73,37 @@ Example Merge GeoRasters:
 
 .. code-block:: python
 
+    import os
     import georasters as gr
     import matplotlib.pyplot as plt
-    
+
+    DATA = "/path/to/tiff/files"
+
     # Import raster
     raster = os.path.join(DATA, 'pre1500.tif')
     data = gr.from_file(raster)
-    (xmin,xsize,x,ymax,y,ysize)=data.geot
-    
+    (xmin, xsize, x, ymax, y, ysize) = data.geot
+
     # Split raster in two
-    data1 = gr.GeoRaster(data.raster[:data.shape[0]/2,:], data.geot, 
-                          nodata_value=data.nodata_value, projection=data.projection, datatype=data.datatype)
-    data2 = gr.GeoRaster(data.raster[data.shape[0]/2:,:], (xmin,xsize,x,ymax+ysize*data.shape[0]/2,y,ysize), 
-                          nodata_value=data.nodata_value, projection=data.projection, datatype=data.datatype)
+    data1 = gr.GeoRaster(
+        data.raster[:data.shape[0] / 2, :],
+        data.geot,
+        nodata_value=data.nodata_value,
+        projection=data.projection,
+        datatype=data.datatype,
+    )
+    data2 = gr.GeoRaster(
+        data.raster[data.shape[0] / 2:, :],
+        (xmin, xsize, x, ymax + ysize * data.shape[0] / 2, y, ysize),
+        nodata_value=data.nodata_value,
+        projection=data.projection,
+        datatype=data.datatype,
+    )
 
     # Plot both parts and save them
-    plt.figure(figsize=(12,8))
+    plt.figure(figsize=(12, 8))
     data1.plot()
-    plt.savefig(os.path.join(DATA,'data1.png'), bbox_inches='tight')
+    plt.savefig(os.path.join(DATA, 'data1.png'), bbox_inches='tight')
 
 .. image :: ./tests/data/data1.png
     
