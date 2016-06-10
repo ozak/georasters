@@ -255,9 +255,18 @@ class GeoRaster(object):
         self.datatype=datatype
         self.mcp_cost=None
 
-    def __getitem__(self,indx):
-        return self.raster.__getitem__(indx)
 
+    def __getitem__(self,indx):
+        rast = self.raster.__getitem__(indx)
+        proj = self.projection
+        nodata = self.nodata_value
+        datatype = self.datatype
+        geot = list(self.geot)
+        geot[0] += indx[0].start*geot[1]
+        geot[3] += indx[1].start*geot[-1]
+        geot = tuple(geot)
+        return GeoRaster(rast,geot,nodata,proj,datatype)
+    
     def __getslice__(self,i,j):
         return self.raster.__getslice__(i,j)
 
