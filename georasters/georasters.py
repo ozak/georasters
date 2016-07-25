@@ -400,7 +400,7 @@ class GeoRaster(object):
 
     def copy(self):
         """Returns copy of itself"""
-        return GeoRaster(self.raster, self.geot, nodata_value = self.nodata_value, projection = self.projection, datatype=self.datatype)
+        return GeoRaster(self.raster.copy(), self.geot, nodata_value = self.nodata_value, projection = self.projection, datatype=self.datatype)
 
     def to_tiff(self, filename):
         '''
