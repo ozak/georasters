@@ -278,11 +278,15 @@ class GeoRaster(object):
             return self.raster<other.raster
         elif isinstance(other, np.ndarray):
             return self.raster<other
+        else:
+            return self.raster<other
 
     def __le__(self,other):
         if isinstance(other, GeoRaster):
             return self.raster<=other.raster
         elif isinstance(other, np.ndarray):
+            return self.raster<=other
+        else:
             return self.raster<=other
 
     def __gt__(self,other):
@@ -290,11 +294,15 @@ class GeoRaster(object):
             return self.raster>other.raster
         elif isinstance(other, np.ndarray):
             return self.raster>other
+        else:
+            return self.raster>other
 
     def __ge__(self,other):
         if isinstance(other, GeoRaster):
             return self.raster>=other.raster
         elif isinstance(other, np.ndarray):
+            return self.raster>=other
+        else:
             return self.raster>=other
 
     def __eq__(self,other):
@@ -302,11 +310,15 @@ class GeoRaster(object):
             return self.raster==other.raster
         elif isinstance(other, np.ndarray):
             return self.raster==other
+        else:
+            return self.raster==other
 
     def __ne__(self,other):
         if isinstance(other, GeoRaster):
             return self.raster!=other.raster
         elif isinstance(other, np.ndarray):
+            return self.raster!=other
+        else:
             return self.raster!=other
 
     def __pos__(self):
