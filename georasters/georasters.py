@@ -104,7 +104,7 @@ def aggregate(raster,NDV,block_size):
             costs = load_tiff(raster)
             costs2=aggregate(costs,NDV,(10,10))
     '''
-    raster2=block_reduce(raster2,block_size,func=np.ma.sum)
+    raster2=block_reduce(raster,block_size,func=np.ma.sum)
     return raster2
 
 # Function to write a new file.
