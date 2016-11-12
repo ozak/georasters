@@ -37,6 +37,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from fiona.crs import from_string
 import geopandas as gp
+from shapely.geometry import Polygon
 
 # Function to read the original file's projection:
 def get_geo_info(FileName):
