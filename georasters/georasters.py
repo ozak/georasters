@@ -679,9 +679,13 @@ class GeoRaster(object):
         geo.map_pixel(point_x, point_y)
         
         Return value of raster in location 
+        Note: (point_x, point_y) must belong to the geographic coordinate system and the coverage of the raster
         '''
         row, col =map_pixel(point_x, point_y, self.x_cell_size, self.y_cell_size, self.xmin, self.ymax)
-        return self.raster[row, col]
+        try:
+            return self.raster[row, col]
+        except:
+            raise Exception('There has been an error. Make sure the point belongs to the raster coverage and it is in the correct geographic coordinate system.')
 
     def map_pixel_location(self, point_x, point_y):
         '''
