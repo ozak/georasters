@@ -34,7 +34,7 @@ install:
   #- if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then conda install --yes imaging; else pip install pillow; fi
   - pip install pillow
   - pip install pytest  # not yet available for py3 in anaconda 
-  - pip install coveralls
+  - pip install python-coveralls
   - pip install networkx --upgrade 
   - "pip install -r requirements.txt"
   - "pip install -r requirements_dev.txt"
