@@ -210,7 +210,7 @@ Find a bug? Report it via github issues by providing
 .. |BuildStatus| image:: https://api.travis-ci.org/ozak/georasters.png
 .. _BuildStatus: https://travis-ci.org/ozak/georasters
 
-.. |CoverageStatus| image:: https://coveralls.io/repos/ozak/georasters/badge.png
+.. |CoverageStatus| image:: https://img.shields.io/coveralls/ozak/georasters.svg
 .. _CoverageStatus: https://coveralls.io/r/ozak/georasters
 
 .. |PyPiVersion| image:: https://img.shields.io/pypi/v/georasters.svg
