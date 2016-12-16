@@ -640,7 +640,7 @@ class GeoRaster(object):
         geo.clip(shape, keep=False)
         Clip raster using shape, where shape is either a GeoPandas DataFrame, shapefile, 
         or some other geometry format used by python-raster-stats
-        Returns list of GeoRasters
+        Returns list of GeoRasters or Pandas DataFrame with GeoRasters and additional information
         keep: If True (Default False), returns Georasters and Geometry information
         '''
         df = pd.DataFrame(zonal_stats(shp, self.raster, nodata=self.nodata_value, all_touched=True, raster_out=True, 
@@ -661,6 +661,29 @@ class GeoRaster(object):
                                         nodata_value = x.mini_raster_nodata, projection = self.projection,
                                         datatype=self.datatype), axis=1)
             return df['GeoRaster'].values
+
+    def stats(self, shp, stats = None, add_stats=None, raster_out=True, *args, **kwargs):
+        '''
+        geo.stats(shape, stats=stats, add_stats=add_stats)
+        Compute raster statistics for geometry in shape, where shape is either a GeoPandas DataFrame, shapefile, 
+        or some other geometry format used by python-raster-stats
+        Runs on python-raster-stats in background (additional help and info can be found there)
+        Returns dataframe with statistics and 
+        raster_out: If True (Default), returns clipped Georasters
+        '''
+        df = pd.DataFrame(zonal_stats(shp, self.raster, nodata=self.nodata_value, all_touched=True, raster_out=raster_out,
+                            affine=Affine.from_gdal(*self.geot), geojson_out=True, stats = None, add_stats=None))
+        df['GeoRaster'] = df.properties.apply(lambda x: GeoRaster(x['mini_raster_array'], Affine.to_gdal(x['mini_raster_affine']), 
+                                    nodata_value = x['mini_raster_nodata'], projection = self.projection,
+                                    datatype=self.datatype))
+        statcols = list(set([i for i in df.properties[0].iterkeys()]).difference(set(shp.columns)))
+        cols = shp.columns.tolist()+statcols
+        cols = [i for i in cols if i!='geometry' and i.find('mini_raster')==-1]
+        df2 = pd.DataFrame([df.properties.apply(lambda x: x[i]) for i in cols]).T
+        df2.columns = cols
+        df2 = df2.merge(df[['id','GeoRaster']], left_index=True, right_index=True)
+        df2.set_index('id', inplace=True)
+        return df2
 
     def gini(self):
         """
