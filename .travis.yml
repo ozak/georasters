@@ -31,7 +31,8 @@ env:
 install:
   - conda create --yes -n env_name python=$TRAVIS_PYTHON_VERSION pip nose cython numpy matplotlib pandas gdal scipy fiona 
   - source activate env_name
-  - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then conda install --yes imaging; else pip install pillow; fi
+  #- if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then conda install --yes imaging; else pip install pillow; fi
+  - pip install pillow
   - pip install pytest  # not yet available for py3 in anaconda 
   - pip install coveralls
   - pip install networkx --upgrade 
