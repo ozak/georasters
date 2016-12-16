@@ -38,6 +38,8 @@ import pandas as pd
 from fiona.crs import from_string
 import geopandas as gp
 from shapely.geometry import Polygon
+from affine import Affine
+from rasterstats import zonal_stats
 
 # Function to read the original file's projection:
 def get_geo_info(FileName):
@@ -633,6 +635,33 @@ class GeoRaster(object):
         '''
         return self.raster.count(*args, **kwargs)
 
+    def clip(self, shp, keep=False, *args, **kwargs):
+        '''
+        geo.clip(shape, keep=False)
+        Clip raster using shape, where shape is either a GeoPandas DataFrame, shapefile, 
+        or some other geometry format used by python-raster-stats
+        Returns list of GeoRasters
+        keep: If True (Default False), returns Georasters and Geometry information
+        '''
+        df = pd.DataFrame(zonal_stats(shp, self.raster, nodata=self.nodata_value, all_touched=True, raster_out=True, 
+                            affine=Affine.from_gdal(*self.geot), geojson_out=keep,))
+        if keep:
+            df['GeoRaster'] = df.properties.apply(lambda x: GeoRaster(x['mini_raster_array'], Affine.to_gdal(x['mini_raster_affine']), 
+                                        nodata_value = x['mini_raster_nodata'], projection = self.projection,
+                                        datatype=self.datatype))
+            cols = list(set([i for i in df.properties[0].iterkeys()]).intersection(set(shp.columns)))
+            df2 = pd.DataFrame([df.properties.apply(lambda x: x[i]) for i in df.properties[0].iterkeys() 
+                                if i in cols]).T.merge(df[['GeoRaster']], left_index=True, right_index=True,)
+            df2.columns = cols+['GeoRaster']
+            df2 = df2.merge(df[['id']], left_index=True, right_index=True)
+            df2.set_index('id', inplace=True)
+            return df2
+        else:
+            df['GeoRaster'] = df.apply(lambda x: GeoRaster(x.mini_raster_array, Affine.to_gdal(x.mini_raster_affine), 
+                                        nodata_value = x.mini_raster_nodata, projection = self.projection,
+                                        datatype=self.datatype), axis=1)
+            return df['GeoRaster'].values
+
     def gini(self):
         """
         geo.gini()
@@ -828,7 +857,7 @@ class GeoRaster(object):
                                     , fill_value=np.nan).mean()/(7*24)
                 start_points.loc[i[0],'Iso'] = grisolation
             if export_raster:
-                cumulative_costs = gr.GeoRaster(np.ma.masked_array(cumulative_costs, 
+                cumulative_costs = GeoRaster(np.ma.masked_array(cumulative_costs, 
                                                     mask = np.logical_or(self.raster.mask, cumulative_costs==np.inf), 
                                                     fill_value = np.nan), self.geot, self.nodata_value, 
                                                     projection=self.projection, datatype = self.datatype)
@@ -840,7 +869,7 @@ class GeoRaster(object):
                 if routes:
                     df2['geometry'] = df2['ID2'].apply(lambda x: 
                                                 self.mcp_cost.traceback(end_points.loc[end_points['ID']==x][['row','col']].values[0]))
-                    df2['geometry'] = df2.geometry.apply(lambda x: [gr.map_pixel_inv(y[0],y[1], self.geot[1], 
+                    df2['geometry'] = df2.geometry.apply(lambda x: [map_pixel_inv(y[0],y[1], self.geot[1], 
                                                     self.geot[-1], self.geot[0], self.geot[-3]) for y in x])
                     df2['geometry'] = df2.geometry.apply(lambda x: LineString(x) if int(len(x)>1) else LineString([x[0],x[0]]))
                     df2 = gp.GeoDataFrame(df2, crs = cea)
