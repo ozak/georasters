@@ -1,10 +1,35 @@
+.. PyPI download statistics are broken, but the new PyPI warehouse makes PyPI
+.. download statistics available through Google BigQuery
+.. (https://bigquery.cloud.google.com).
+.. Query to list package downloads by version:
+..
+   SELECT
+     file.project,
+     file.version,
+     COUNT(*) as total_downloads,
+     SUM(CASE WHEN REGEXP_EXTRACT(details.python, r"^([^\.]+\.[^\.]+)") = "2.6" THEN 1 ELSE 0 END) as py26_downloads,
+     SUM(CASE WHEN REGEXP_EXTRACT(details.python, r"^([^\.]+\.[^\.]+)") = "2.7" THEN 1 ELSE 0 END) as py27_downloads,
+     SUM(CASE WHEN REGEXP_EXTRACT(details.python, r"^([^\.]+)\.[^\.]+") = "3" THEN 1 ELSE 0 END) as py3_downloads,
+   FROM
+     TABLE_DATE_RANGE(
+       [the-psf:pypi.downloads],
+       TIMESTAMP("19700101"),
+       CURRENT_TIMESTAMP()
+     )
+   WHERE
+     file.project = 'georasters'
+   GROUP BY
+     file.project, file.version
+   ORDER BY
+     file.version DESC
+
 GeoRasters
 ===========
 
-|BuildStatus|_ 
-|CoverageStatus|_
 |PyPiVersion|_
 |PyPiDownloads|_
+|BuildStatus|_ 
+|CoverageStatus|_
 
 The ``GeoRasters`` package is a python module that provides a fast and flexible
 tool to work with GIS raster files. It provides the GeoRaster class, which makes working with rasters quite transparent and easy.
@@ -188,8 +213,10 @@ Find a bug? Report it via github issues by providing
 .. |CoverageStatus| image:: https://coveralls.io/repos/ozak/georasters/badge.png
 .. _CoverageStatus: https://coveralls.io/r/ozak/georasters
 
-.. |PyPiVersion| image:: https://pypip.in/v/georasters/badge.png
-.. _PyPiVersion: http://pypi.python.org/pypi/georasters
+.. |PyPiVersion| image:: https://img.shields.io/pypi/v/georasters.svg
+.. _PyPiVersion: :target: https://pypi.python.org/pypi/georasters/
+    :alt: Version on Pypi
 
-.. |PyPiDownloads| image:: https://pypip.in/d/georasters/badge.png
-.. _PyPiDownloads: http://pypi.python.org/pypi/georasters
+.. |PyPiDownloads| image:: https://img.shields.io/pypi/dm/georasters.svg
+.. _PyPiDownloads:     :target: https://pypi.python.org/pypi/georasters/
+     :alt: Pypi downloads
