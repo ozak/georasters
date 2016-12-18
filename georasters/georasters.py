@@ -132,7 +132,7 @@ def create_geotiff(Name, Array, driver, NDV, xsize, ysize, GeoT, Projection, Dat
     return NewFileName
 
 # Function to aggregate and align rasters
-def align_rasters(raster,alignraster,how=np.ma.mean,cxsize=None,cysize=None,masked=False):
+def align_rasters(raster, alignraster, how=np.ma.mean, cxsize=None, cysize=None, masked=False):
     '''
     Align two rasters so that data overlaps by geographical location
     Usage: (alignedraster_o, alignedraster_a, GeoT_a) = AlignRasters(raster, alignraster, how=np.mean)
@@ -737,7 +737,7 @@ class GeoRaster(object):
         try:
             return self.raster[row, col]
         except:
-            raise Exception('There has been an error. Make sure the point belongs to the raster coverage and it is in the correct geographic coordinate system.')
+            raise RasterGeoError('Make sure the point belongs to the raster coverage and it is in the correct geographic coordinate system.')
 
     def map_pixel_location(self, point_x, point_y):
         '''
@@ -1140,3 +1140,56 @@ def to_geopandas(raster):
     df['geometry'] = df.apply(squares, georaster=raster, axis=1)
     df = gp.GeoDataFrame(df, crs=from_string(raster.projection.ExportToProj4()))
     return df
+
+def raster_weights(raster, rook=False, transform = 'r', **kwargs):
+    """
+    Construct PySal weights for rasters
+    It drops weights for all cells that have no data or are Inf/NaN
+    Usage:
+
+    w = raster_weights(raster, rook=False, *args, **kwargs)
+
+    where 
+        raster: (Masked) Numpy array for which weights are to be constructed
+        rook: Boolean, type of contiguity. Default is queen. For rook, rook = True
+        the rest of arguments are passed to pysal.lat2W
+    """
+    rasterf=raster.flatten()
+    if len(raster.shape) == 1:
+        shape = (np.sqrt(raster.shape[0]) * np.array([1,1])).astype(int)
+    else:
+        shape = raster.shape
+    w=pysal.lat2W(*shape, rook=rook, **kwargs)
+    
+    # Identify missing/no data
+    if type(rasterf)==numpy.ma.core.MaskedArray:
+        miss = rasterf.mask
+    else:
+        miss = np.logical_or(np.isnan(rasterf),np.isinf(rasterf))
+    missn = set(np.arange(0,len(miss))[miss])
+    
+    cneighbors = {}
+    for key, value in w.neighbors.items():
+        if key not in missn:
+            value = list(set(value).difference(missn))
+            cneighbors[key] = value
+    w = pysal.W(cneighbors)
+    w.transform = transform 
+    return w
+
+def map_vector(x, raster, **kvars):
+    """
+    Create new GeoRaster, which has its data replaced by x
+    Useful to map output of PySal analyses, e.g. spatial autocorrelation values, etc.
+    
+    Usage: raster2 = map_vector(x, raster)
+    where
+        raster: GeoRaster
+        x: Numpy array of data with same length as non-missing values in raster,
+           i.e., len(x) == np.sum(raster.mask==False)
+    """
+    y = raster.copy()
+    y.raster[y.raster.mask==False] = x
+    return y
+
+
