@@ -46,16 +46,16 @@ import pysal
 def get_geo_info(FileName):
     ''' Gets information from a Raster data set
     '''
-    SourceDS = gdal.Open(FileName, GA_ReadOnly)
-    NDV = SourceDS.GetRasterBand(1).GetNoDataValue()
-    xsize = SourceDS.RasterXSize
-    ysize = SourceDS.RasterYSize
-    GeoT = SourceDS.GetGeoTransform()
+    sourceds = gdal.Open(FileName, GA_ReadOnly)
+    ndv = sourceds.GetRasterBand(1).GetNoDataValue()
+    xsize = sourceds.RasterXSize
+    ysize = sourceds.RasterYSize
+    geot = sourceds.Getgeotransform()
     Projection = osr.SpatialReference()
-    Projection.ImportFromWkt(SourceDS.GetProjectionRef())
-    DataType = SourceDS.GetRasterBand(1).DataType
+    Projection.ImportFromWkt(sourceds.GetProjectionRef())
+    DataType = sourceds.GetRasterBand(1).DataType
     DataType = gdal.GetDataTypeName(DataType)
-    return NDV, xsize, ysize, GeoT, Projection, DataType
+    return ndv, xsize, ysize, geot, Projection, DataType
 
 # Function to map location in pixel of raster array
 def map_pixel(point_x, point_y, cellx, celly, xmin, ymax):
@@ -66,8 +66,8 @@ def map_pixel(point_x, point_y, cellx, celly, xmin, ymax):
             ymax is topmost Y coordinate in system
     Example:
             raster = HMISea.tif'
-            NDV, xsize, ysize, GeoT, Projection, DataType = GetGeoInfo(raster)
-            row, col = map_pixel(x,y,GeoT[1],GeoT[-1], GeoT[0],GeoT[3])
+            ndv, xsize, ysize, geot, Projection, DataType = GetGeoInfo(raster)
+            row, col = map_pixel(x,y,geot[1],geot[-1], geot[0],geot[3])
     '''
     point_x = np.asarray(point_x)
     point_y = np.asarray(point_y)
@@ -83,8 +83,8 @@ def map_pixel_inv(row, col, cellx, celly, xmin, ymax):
             ymax is topmost Y coordinate in system
     Example:
             raster = HMISea.tif'
-            NDV, xsize, ysize, GeoT, Projection, DataType = GetGeoInfo(raster)
-            row, col = map_pixel(x,y,GeoT[1],GeoT[-1], GeoT[0],GeoT[3])
+            ndv, xsize, ysize, geot, Projection, DataType = GetGeoInfo(raster)
+            row, col = map_pixel(x,y,geot[1],geot[-1], geot[0],geot[3])
     '''
     col = np.asarray(col)
     row = np.asarray(row)
@@ -93,43 +93,43 @@ def map_pixel_inv(row, col, cellx, celly, xmin, ymax):
     return point_x, point_y
 
 # Aggregate raster to higher resolution using sums
-def aggregate(raster, NDV, block_size):
+def aggregate(raster, ndv, block_size):
     '''
     Aggregate raster to smaller resolution, by adding cells.
     Usage:
-            aggregate(raster,NDV,block_size)
+            aggregate(raster, ndv, block_size)
     where
-            raster is a Numpy array created by importing the raster (e.g. GeoTiff)
-            NDV is the NoData Value for the raster (can be read using the GetGeoInfo function)
+            raster is a Numpy array created by importing the raster (e.g. geotiff)
+            ndv is the NoData Value for the raster (can be read using the GetGeoInfo function)
             block_size is a duple of factors by which the raster will be shrinked
     Example:
             raster = HMISea.tif'
-            NDV, xsize, ysize, GeoT, Projection, DataType = GetGeoInfo(raster)
+            ndv, xsize, ysize, geot, Projection, DataType = GetGeoInfo(raster)
             costs = load_tiff(raster)
-            costs2=aggregate(costs,NDV,(10,10))
+            costs2=aggregate(costs, ndv, (10,10))
     '''
     raster2 = block_reduce(raster, block_size, func=np.ma.sum)
     return raster2
 
 # Function to write a new file.
-def create_geotiff(Name, Array, driver, NDV, xsize, ysize, GeoT, Projection, DataType):
+def create_geotiff(Name, Array, driver, ndv, xsize, ysize, geot, Projection, DataType):
     '''
-    Creates new GeoTiff from array
+    Creates new geotiff from array
     '''
     if type(DataType) != np.int:
         if DataType.startswith('gdal.GDT_') == False:
             DataType = eval('gdal.GDT_'+DataType)
     NewFileName = Name+'.tif'
     # Set nans to the original No Data Value
-    Array[np.isnan(Array)] = NDV
+    Array[np.isnan(Array)] = ndv
     # Set up the dataset
     DataSet = driver.Create(NewFileName, xsize, ysize, 1, DataType)
     # the '1' is for band 1.
-    DataSet.SetGeoTransform(GeoT)
+    DataSet.Setgeotransform(geot)
     DataSet.SetProjection(Projection.ExportToWkt())
     # Write the array
     DataSet.GetRasterBand(1).WriteArray(Array)
-    DataSet.GetRasterBand(1).SetNoDataValue(NDV)
+    DataSet.GetRasterBand(1).SetNoDataValue(ndv)
     return NewFileName
 
 # Function to aggregate and align rasters
@@ -138,7 +138,7 @@ def align_rasters(raster, alignraster, how=np.ma.mean, cxsize=None, cysize=None,
     Align two rasters so that data overlaps by geographical location
     Usage:
     
-    (alignedraster_o, alignedraster_a, GeoT_a) = AlignRasters(raster, alignraster, how=np.mean)
+    (alignedraster_o, alignedraster_a, geot_a) = AlignRasters(raster, alignraster, how=np.mean)
     
     where 
         raster: string with location of raster to be aligned
@@ -146,37 +146,37 @@ def align_rasters(raster, alignraster, how=np.ma.mean, cxsize=None, cysize=None,
         how: function used to aggregate cells (if the rasters have different sizes)
     It is assumed that both rasters have the same size
     '''
-    NDV1, xsize1, ysize1, GeoT1, Projection1, DataType1 = GetGeoInfo(raster)
-    NDV2, xsize2, ysize2, GeoT2, Projection2, DataType2 = GetGeoInfo(alignraster)
+    ndv1, xsize1, ysize1, geot1, Projection1, DataType1 = GetGeoInfo(raster)
+    ndv2, xsize2, ysize2, geot2, Projection2, DataType2 = GetGeoInfo(alignraster)
     if Projection1.ExportToMICoordSys() == Projection2.ExportToMICoordSys():
-        blocksize = (np.round(GeoT2[1]/GeoT1[1]), np.round(GeoT2[-1]/GeoT1[-1]))
+        blocksize = (np.round(geot2[1]/geot1[1]), np.round(geot2[-1]/geot1[-1]))
         mraster = gdalnumeric.LoadFile(raster)
-        mraster = np.ma.masked_array(mraster, mask=mraster == NDV1, fill_value=NDV1)
+        mraster = np.ma.masked_array(mraster, mask=mraster == ndv1, fill_value=ndv1)
         mmin = mraster.min()
         mraster = block_reduce(mraster, blocksize, func=how)
         araster = gdalnumeric.LoadFile(alignraster)
-        araster = np.ma.masked_array(araster, mask=araster == NDV2, fill_value=NDV2)
+        araster = np.ma.masked_array(araster, mask=araster == ndv2, fill_value=ndv2)
         amin = araster.min()
-        if GeoT1[0] <= GeoT2[0]:
-            row3, mcol = map_pixel(GeoT2[0], GeoT2[3], GeoT1[1] *blocksize[0],
-                                   GeoT1[-1]*blocksize[1], GeoT1[0], GeoT1[3])
+        if geot1[0] <= geot2[0]:
+            row3, mcol = map_pixel(geot2[0], geot2[3], geot1[1] *blocksize[0],
+                                   geot1[-1]*blocksize[1], geot1[0], geot1[3])
             acol = 0
         else:
-            row3, acol = map_pixel(GeoT1[0], GeoT1[3], GeoT2[1], GeoT2[-1], GeoT2[0], GeoT2[3])
+            row3, acol = map_pixel(geot1[0], geot1[3], geot2[1], geot2[-1], geot2[0], geot2[3])
             mcol = 0
-        if GeoT1[3] <= GeoT2[3]:
-            arow, col3 = map_pixel(GeoT1[0], GeoT1[3], GeoT2[1], GeoT2[-1], GeoT2[0], GeoT2[3])
+        if geot1[3] <= geot2[3]:
+            arow, col3 = map_pixel(geot1[0], geot1[3], geot2[1], geot2[-1], geot2[0], geot2[3])
             mrow = 0
         else:
-            mrow, col3 = map_pixel(GeoT2[0], GeoT2[3], GeoT1[1] *blocksize[0],
-                                   GeoT1[-1]*blocksize[1], GeoT1[0], GeoT1[3])
+            mrow, col3 = map_pixel(geot2[0], geot2[3], geot1[1] *blocksize[0],
+                                   geot1[-1]*blocksize[1], geot1[0], geot1[3])
             arow = 0
         '''
-        col3,row3 = map_pixel(GeoT1[0], GeoT1[3], GeoT2[1],GeoT2[-1], GeoT2[0], GeoT2[3])
+        col3,row3 = map_pixel(geot1[0], geot1[3], geot2[1],geot2[-1], geot2[0], geot2[3])
         col3 = max(0,col3)
         row3 = max(0,row3)
         araster = araster[row3:,col3:]
-        col3,row3 = map_pixel(GeoT2[0], GeoT2[3], GeoT1[1] *blocksize[0],GeoT1[-1]*blocksize[1], GeoT1[0], GeoT1[3])
+        col3,row3 = map_pixel(geot2[0], geot2[3], geot1[1] *blocksize[0],geot1[-1]*blocksize[1], geot1[0], geot1[3])
         col3 = max(0,abs(col3))
         row3 = max(0,np.abs(row3))
         mraster = mraster[row3:,col3:]
@@ -193,25 +193,25 @@ def align_rasters(raster, alignraster, how=np.ma.mean, cxsize=None, cysize=None,
             mraster = mraster[:rows, :cols]
         #mraster = mraster[row3:rows+row3,col3:cols+col3]
         if masked:
-            mraster = np.ma.masked_array(mraster, mask=mraster < mmin, fill_value=NDV1)
-            araster = np.ma.masked_array(araster, mask=araster < amin, fill_value=NDV2)
-        GeoT = (max(GeoT1[0], GeoT2[0]), GeoT1[1]*blocksize[0], GeoT1[2], 
-                min(GeoT1[3], GeoT2[3]), GeoT1[4], GeoT1[-1]*blocksize[1])
-        return (mraster, araster, GeoT)
+            mraster = np.ma.masked_array(mraster, mask=mraster < mmin, fill_value=ndv1)
+            araster = np.ma.masked_array(araster, mask=araster < amin, fill_value=ndv2)
+        geot = (max(geot1[0], geot2[0]), geot1[1]*blocksize[0], geot1[2], 
+                min(geot1[3], geot2[3]), geot1[4], geot1[-1]*blocksize[1])
+        return (mraster, araster, geot)
     else:
         print("Rasters need to be in same projection")
         return (-1, -1, -1)
 
-# Load GeoTif raster data
+# Load geotif raster data
 def load_tiff(file):
     """
-    Load a GeoTiff raster keeping NDV values using a masked array
+    Load a geotiff raster keeping ndv values using a masked array
     Usage:
             data = LoadTiffRaster(file)
     """
-    NDV, xsize, ysize, GeoT, Projection, DataType = get_geo_info(file)
+    ndv, xsize, ysize, geot, Projection, DataType = get_geo_info(file)
     data = gdalnumeric.LoadFile(file)
-    data = np.ma.masked_array(data, mask=data == NDV, fill_value=NDV)
+    data = np.ma.masked_array(data, mask=data == ndv, fill_value=ndv)
     return data
 
 class RasterGeoTError(Exception):
@@ -445,7 +445,7 @@ class GeoRaster(object):
         '''
         geo.to_tiff(filename)
         
-        Saves GeoRaster as GeoTiff filename.tif with type datatype
+        Saves GeoRaster as geotiff filename.tif with type datatype
         
         If GeoRaster does not have datatype, then it tries to assign a type.
         You can assign the type yourself by setting
@@ -1025,19 +1025,19 @@ def from_file(filename):
     """
     Create a GeoRaster object from a file
     """
-    NDV, xsize, ysize, GeoT, Projection, DataType = get_geo_info(filename)
+    ndv, xsize, ysize, geot, Projection, DataType = get_geo_info(filename)
     data = gdalnumeric.LoadFile(filename)
-    data = np.ma.masked_array(data, mask=data == NDV, fill_value=NDV)
-    return GeoRaster(data, GeoT, nodata_value=NDV, projection=Projection, datatype=DataType)
+    data = np.ma.masked_array(data, mask=data == ndv, fill_value=ndv)
+    return GeoRaster(data, geot, nodata_value=ndv, projection=Projection, datatype=DataType)
 
 # Convert Pandas DataFrame to raster
 def from_pandas(df, value='value', x='x', y='y', cellx=None, celly=None, xmin=None, ymax=None,
-                GeoT=None, nodata_value=None, projection=None, datatype=None):
+                geot=None, nodata_value=None, projection=None, datatype=None):
     """
     Creates a GeoRaster from a Pandas DataFrame. Useful to plot or export data to rasters.
     Usage:
         raster = from_pandas(df, value='value', x='x', y='y', cellx= cellx, celly=celly, xmin=xmin, ymax=ymax,
-                        GeoT=GeoT, nodata_value=NDV, projection=Projection, datatype=DataType)
+                        geot=geot, nodata_value=ndv, projection=Projection, datatype=DataType)
 
     Although it does not require all the inputs, it is highly recommended to include the geographical information, 
     so that the GeoRaster is properly constructed. As usual, the information can be added afterwards directly to the 
@@ -1058,9 +1058,9 @@ def from_pandas(df, value='value', x='x', y='y', cellx=None, celly=None, xmin=No
         dfout[np.isnan(dfout)] = nodata_value
     if not nodata_value:
         nodata_value = np.nan
-    if not GeoT:
-        GeoT = (xmin, cellx, 0, ymax, 0, celly)
-    return GeoRaster(dfout, GeoT, nodata_value=nodata_value, projection=projection, datatype=datatype)
+    if not geot:
+        geot = (xmin, cellx, 0, ymax, 0, celly)
+    return GeoRaster(dfout, geot, nodata_value=nodata_value, projection=projection, datatype=datatype)
 
 # GDAL conversion types
 NP2GDAL_CONVERSION = {
@@ -1087,30 +1087,30 @@ def align_georasters(raster, alignraster, how=np.mean, cxsize=None, cysize=None)
         how: function used to aggregate cells (if the rasters have different sizes)
     It is assumed that both rasters have the same size
     '''
-    (NDV1, xsize1, ysize1, GeoT1, Projection1, DataType1) = (raster.nodata_value, raster.shape[1], raster.shape[0], raster.geot, raster.projection, raster.datatype)
-    (NDV2, xsize2, ysize2, GeoT2, Projection2, DataType2) = (alignraster.nodata_value, alignraster.shape[1], alignraster.shape[0], alignraster.geot, alignraster.projection, alignraster.datatype)
+    (ndv1, xsize1, ysize1, geot1, Projection1, DataType1) = (raster.nodata_value, raster.shape[1], raster.shape[0], raster.geot, raster.projection, raster.datatype)
+    (ndv2, xsize2, ysize2, geot2, Projection2, DataType2) = (alignraster.nodata_value, alignraster.shape[1], alignraster.shape[0], alignraster.geot, alignraster.projection, alignraster.datatype)
     if Projection1.ExportToMICoordSys() == Projection2.ExportToMICoordSys():
-        blocksize = (np.round(max(GeoT2[1]/GeoT1[1], 1)), np.round(max(GeoT2[-1]/GeoT1[-1], 1)))
+        blocksize = (np.round(max(geot2[1]/geot1[1], 1)), np.round(max(geot2[-1]/geot1[-1], 1)))
         mraster = raster.raster
         mmin = mraster.min()
         if block_reduce != (1, 1):
             mraster = block_reduce(mraster, blocksize, func=how)
-        blocksize = (np.round(max(GeoT1[1]/GeoT2[1], 1)), np.round(max(GeoT1[-1]/GeoT2[-1], 1)))
+        blocksize = (np.round(max(geot1[1]/geot2[1], 1)), np.round(max(geot1[-1]/geot2[-1], 1)))
         araster = alignraster.raster
         amin = araster.min()
         if block_reduce != (1, 1):
             araster = block_reduce(araster, blocksize, func=how)
-        if GeoT1[0] <= GeoT2[0]:
-            row3, mcol = map_pixel(GeoT2[0], GeoT2[3], GeoT1[1] *blocksize[0], GeoT1[-1]*blocksize[1], GeoT1[0], GeoT1[3])
+        if geot1[0] <= geot2[0]:
+            row3, mcol = map_pixel(geot2[0], geot2[3], geot1[1] *blocksize[0], geot1[-1]*blocksize[1], geot1[0], geot1[3])
             acol = 0
         else:
-            row3, acol = map_pixel(GeoT1[0], GeoT1[3], GeoT2[1], GeoT2[-1], GeoT2[0], GeoT2[3])
+            row3, acol = map_pixel(geot1[0], geot1[3], geot2[1], geot2[-1], geot2[0], geot2[3])
             mcol = 0
-        if GeoT1[3] <= GeoT2[3]:
-            arow, col3 = map_pixel(GeoT1[0], GeoT1[3], GeoT2[1], GeoT2[-1], GeoT2[0], GeoT2[3])
+        if geot1[3] <= geot2[3]:
+            arow, col3 = map_pixel(geot1[0], geot1[3], geot2[1], geot2[-1], geot2[0], geot2[3])
             mrow = 0
         else:
-            mrow, col3 = map_pixel(GeoT2[0], GeoT2[3], GeoT1[1] *blocksize[0], GeoT1[-1]*blocksize[1], GeoT1[0], GeoT1[3])
+            mrow, col3 = map_pixel(geot2[0], geot2[3], geot1[1] *blocksize[0], geot1[-1]*blocksize[1], geot1[0], geot1[3])
             arow = 0
         mraster = mraster[mrow:, mcol:]
         araster = araster[arow:, acol:]
@@ -1122,17 +1122,17 @@ def align_georasters(raster, alignraster, how=np.mean, cxsize=None, cysize=None)
             cols = min(araster.shape[1], mraster.shape[1])
             araster = araster[:rows, :cols]
             mraster = mraster[:rows, :cols]
-        mraster = np.ma.masked_array(mraster, mask=mraster < mmin, fill_value=NDV1)
-        araster = np.ma.masked_array(araster, mask=araster < amin, fill_value=NDV2)
-        GeoT = (max(GeoT1[0], GeoT2[0]), GeoT1[1]*blocksize[0], GeoT1[2], min(GeoT1[3], GeoT2[3]), GeoT1[4], GeoT1[-1]*blocksize[1])
-        mraster = GeoRaster(mraster, GeoT, projection=Projection1, nodata_value=NDV1, datatype=DataType1)
-        araster = GeoRaster(araster, GeoT, projection=Projection2, nodata_value=NDV2, datatype=DataType2)
+        mraster = np.ma.masked_array(mraster, mask=mraster < mmin, fill_value=ndv1)
+        araster = np.ma.masked_array(araster, mask=araster < amin, fill_value=ndv2)
+        geot = (max(geot1[0], geot2[0]), geot1[1]*blocksize[0], geot1[2], min(geot1[3], geot2[3]), geot1[4], geot1[-1]*blocksize[1])
+        mraster = GeoRaster(mraster, geot, projection=Projection1, nodata_value=ndv1, datatype=DataType1)
+        araster = GeoRaster(araster, geot, projection=Projection2, nodata_value=ndv2, datatype=DataType2)
         return (mraster, araster)
     else:
         print("Rasters need to be in same projection")
         return (-1, -1)
 
-# Test if two GeoRasters are in same GeoT and have same projection
+# Test if two GeoRasters are in same geot and have same projection
 def is_geovalid(grasterlist):
     if np.sum(map(isinstance,grasterlist, [GeoRaster for i in range(len(grasterlist))])) == len(grasterlist):
         graster0 = grasterlist[-1]
