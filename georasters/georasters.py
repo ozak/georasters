@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import division
 import numpy as np
 from osgeo import gdal, gdalnumeric, ogr, osr, gdal_array
-from gdalconst import *
+from gdalconst import GA_ReadOnly
 from skimage.measure import block_reduce
 from skimage.transform import resize
 import skimage.graph as graph
@@ -37,7 +37,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from fiona.crs import from_string
 import geopandas as gp
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, LineString
 from affine import Affine
 from rasterstats import zonal_stats
 import pysal
@@ -481,13 +481,13 @@ class GeoRaster(object):
         df = to_geopandas(self)
         return df
 
-    def plot(self):
+    def plot(self, **kwargs):
         '''
         geo.plot()
 
         Returns plot of raster data
         '''
-        plt.matshow(self.raster)
+        plt.matshow(self.raster, **kwargs)
 
     def union(self, other):
         '''
