@@ -8,15 +8,32 @@ def readme():
     with open('README.rst') as f:
         return f.read()
 
+class PyTest(TestCommand):
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
+
+    def run_tests(self):
+        import pytest
+        errno = pytest.main(self.test_args)
+        sys.exit(errno)
+
 setup(name='georasters',
       version='0.5.2',
       description='Tools for working with Geographical Information System Rasters',
       url='http://github.com/ozak/georasters',
+      keywords="gis geospatial geographic raster vector zonal statistics spatial analysis",
       author='Ömer Özak',
       author_email='omer@omerozak.com',
       license='GPLv3',
       #package_dir={'': 'src'},
       packages=['georasters'],
+      long_description=read('README.rst'),
+      install_requires=read('requirements.txt').splitlines(),
+      tests_require=['pytest', 'pytest-cov>=2.2.0', 'pyshp>=1.1.4',
+                     'coverage', 'simplejson'],
+      cmdclass={'test': PyTest},
       install_requires=[
           'numpy',
           'GDAL',
