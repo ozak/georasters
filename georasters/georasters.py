@@ -53,9 +53,9 @@ def get_geo_info(filename):
     geot = sourceds.GetGeoTransform()
     projection = osr.SpatialReference()
     projection.ImportFromWkt(sourceds.GetProjectionRef())
-    DataType = sourceds.GetRasterBand(1).DataType
-    DataType = gdal.GetDataTypeName(DataType)
-    return ndv, xsize, ysize, geot, projection, DataType
+    datatype = sourceds.GetRasterBand(1).DataType
+    datatype = gdal.GetDataTypeName(datatype)
+    return ndv, xsize, ysize, geot, projection, datatype
 
 # Function to map location in pixel of raster array
 def map_pixel(point_x, point_y, cellx, celly, xmin, ymax):
@@ -66,7 +66,7 @@ def map_pixel(point_x, point_y, cellx, celly, xmin, ymax):
             ymax is topmost Y coordinate in system
     Example:
             raster = HMISea.tif'
-            ndv, xsize, ysize, geot, projection, DataType = GetGeoInfo(raster)
+            ndv, xsize, ysize, geot, projection, datatype = GetGeoInfo(raster)
             row, col = map_pixel(x,y,geot[1],geot[-1], geot[0],geot[3])
     '''
     point_x = np.asarray(point_x)
@@ -83,7 +83,7 @@ def map_pixel_inv(row, col, cellx, celly, xmin, ymax):
             ymax is topmost Y coordinate in system
     Example:
             raster = HMISea.tif'
-            ndv, xsize, ysize, geot, projection, DataType = GetGeoInfo(raster)
+            ndv, xsize, ysize, geot, projection, datatype = GetGeoInfo(raster)
             row, col = map_pixel(x,y,geot[1],geot[-1], geot[0],geot[3])
     '''
     col = np.asarray(col)
@@ -104,7 +104,7 @@ def aggregate(raster, ndv, block_size):
             block_size is a duple of factors by which the raster will be shrinked
     Example:
             raster = HMISea.tif'
-            ndv, xsize, ysize, geot, projection, DataType = GetGeoInfo(raster)
+            ndv, xsize, ysize, geot, projection, datatype = GetGeoInfo(raster)
             costs = load_tiff(raster)
             costs2=aggregate(costs, ndv, (10,10))
     '''
@@ -112,18 +112,18 @@ def aggregate(raster, ndv, block_size):
     return raster2
 
 # Function to write a new file.
-def create_geotiff(name, Array, driver, ndv, xsize, ysize, geot, projection, DataType):
+def create_geotiff(name, Array, driver, ndv, xsize, ysize, geot, projection, datatype):
     '''
     Creates new geotiff from array
     '''
-    if type(DataType) != np.int:
-        if DataType.startswith('gdal.GDT_') == False:
-            DataType = eval('gdal.GDT_'+DataType)
+    if type(datatype) != np.int:
+        if datatype.startswith('gdal.GDT_') == False:
+            datatype = eval('gdal.GDT_'+datatype)
     newfilename = name+'.tif'
     # Set nans to the original No Data Value
     Array[np.isnan(Array)] = ndv
     # Set up the dataset
-    DataSet = driver.Create(newfilename, xsize, ysize, 1, DataType)
+    DataSet = driver.Create(newfilename, xsize, ysize, 1, datatype)
     # the '1' is for band 1.
     DataSet.Setgeotransform(geot)
     DataSet.SetProjection(projection.ExportToWkt())
@@ -146,8 +146,8 @@ def align_rasters(raster, alignraster, how=np.ma.mean, cxsize=None, cysize=None,
         how: function used to aggregate cells (if the rasters have different sizes)
     It is assumed that both rasters have the same size
     '''
-    ndv1, xsize1, ysize1, geot1, projection1, DataType1 = GetGeoInfo(raster)
-    ndv2, xsize2, ysize2, geot2, projection2, DataType2 = GetGeoInfo(alignraster)
+    ndv1, xsize1, ysize1, geot1, projection1, datatype1 = GetGeoInfo(raster)
+    ndv2, xsize2, ysize2, geot2, projection2, datatype2 = GetGeoInfo(alignraster)
     if projection1.ExportToMICoordSys() == projection2.ExportToMICoordSys():
         blocksize = (np.round(geot2[1]/geot1[1]), np.round(geot2[-1]/geot1[-1]))
         mraster = gdalnumeric.LoadFile(raster)
@@ -209,7 +209,7 @@ def load_tiff(file):
     Usage:
             data = LoadTiffRaster(file)
     """
-    ndv, xsize, ysize, geot, projection, DataType = get_geo_info(file)
+    ndv, xsize, ysize, geot, projection, datatype = get_geo_info(file)
     data = gdalnumeric.LoadFile(file)
     data = np.ma.masked_array(data, mask=data == ndv, fill_value=ndv)
     return data
@@ -1025,10 +1025,10 @@ def from_file(filename):
     """
     Create a GeoRaster object from a file
     """
-    ndv, xsize, ysize, geot, projection, DataType = get_geo_info(filename)
+    ndv, xsize, ysize, geot, projection, datatype = get_geo_info(filename)
     data = gdalnumeric.LoadFile(filename)
     data = np.ma.masked_array(data, mask=data == ndv, fill_value=ndv)
-    return GeoRaster(data, geot, nodata_value=ndv, projection=projection, datatype=DataType)
+    return GeoRaster(data, geot, nodata_value=ndv, projection=projection, datatype=datatype)
 
 # Convert Pandas DataFrame to raster
 def from_pandas(df, value='value', x='x', y='y', cellx=None, celly=None, xmin=None, ymax=None,
@@ -1037,7 +1037,7 @@ def from_pandas(df, value='value', x='x', y='y', cellx=None, celly=None, xmin=No
     Creates a GeoRaster from a Pandas DataFrame. Useful to plot or export data to rasters.
     Usage:
         raster = from_pandas(df, value='value', x='x', y='y', cellx= cellx, celly=celly, xmin=xmin, ymax=ymax,
-                        geot=geot, nodata_value=ndv, projection=projection, datatype=DataType)
+                        geot=geot, nodata_value=ndv, projection=projection, datatype=datatype)
 
     Although it does not require all the inputs, it is highly recommended to include the geographical information, 
     so that the GeoRaster is properly constructed. As usual, the information can be added afterwards directly to the 
@@ -1087,8 +1087,8 @@ def align_georasters(raster, alignraster, how=np.mean, cxsize=None, cysize=None)
         how: function used to aggregate cells (if the rasters have different sizes)
     It is assumed that both rasters have the same size
     '''
-    (ndv1, xsize1, ysize1, geot1, projection1, DataType1) = (raster.nodata_value, raster.shape[1], raster.shape[0], raster.geot, raster.projection, raster.datatype)
-    (ndv2, xsize2, ysize2, geot2, projection2, DataType2) = (alignraster.nodata_value, alignraster.shape[1], alignraster.shape[0], alignraster.geot, alignraster.projection, alignraster.datatype)
+    (ndv1, xsize1, ysize1, geot1, projection1, datatype1) = (raster.nodata_value, raster.shape[1], raster.shape[0], raster.geot, raster.projection, raster.datatype)
+    (ndv2, xsize2, ysize2, geot2, projection2, datatype2) = (alignraster.nodata_value, alignraster.shape[1], alignraster.shape[0], alignraster.geot, alignraster.projection, alignraster.datatype)
     if projection1.ExportToMICoordSys() == projection2.ExportToMICoordSys():
         blocksize = (np.round(max(geot2[1]/geot1[1], 1)), np.round(max(geot2[-1]/geot1[-1], 1)))
         mraster = raster.raster
@@ -1125,8 +1125,8 @@ def align_georasters(raster, alignraster, how=np.mean, cxsize=None, cysize=None)
         mraster = np.ma.masked_array(mraster, mask=mraster < mmin, fill_value=ndv1)
         araster = np.ma.masked_array(araster, mask=araster < amin, fill_value=ndv2)
         geot = (max(geot1[0], geot2[0]), geot1[1]*blocksize[0], geot1[2], min(geot1[3], geot2[3]), geot1[4], geot1[-1]*blocksize[1])
-        mraster = GeoRaster(mraster, geot, projection=projection1, nodata_value=ndv1, datatype=DataType1)
-        araster = GeoRaster(araster, geot, projection=projection2, nodata_value=ndv2, datatype=DataType2)
+        mraster = GeoRaster(mraster, geot, projection=projection1, nodata_value=ndv1, datatype=datatype1)
+        araster = GeoRaster(araster, geot, projection=projection2, nodata_value=ndv2, datatype=datatype2)
         return (mraster, araster)
     else:
         print("Rasters need to be in same projection")
