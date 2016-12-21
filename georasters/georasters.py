@@ -50,7 +50,7 @@ def get_geo_info(FileName):
     ndv = sourceds.GetRasterBand(1).GetNoDataValue()
     xsize = sourceds.RasterXSize
     ysize = sourceds.RasterYSize
-    geot = sourceds.Getgeotransform()
+    geot = sourceds.GetGeoTransform()
     Projection = osr.SpatialReference()
     Projection.ImportFromWkt(sourceds.GetProjectionRef())
     DataType = sourceds.GetRasterBand(1).DataType
