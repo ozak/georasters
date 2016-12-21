@@ -8,3 +8,4 @@ matplotlib
 coverage
 fiona
 geopandas
+pysal
