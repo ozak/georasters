@@ -31,14 +31,16 @@ from __future__ import division
 import georasters as gr
 import hmi
 import geopandas as gp
+import geostats
 import hmi
+import os
 
 # Change dir
 %cd CulturalDistance
-pathcntrycyl='../../data/GIS/GMI/cyl/'
+pathcntrycyl = '../../data/GIS/GMI/cyl/'
 
 # Load raster data
-A=gr.from_file(hmi.path+'/HMI10.tif')
+A = gr.from_file(hmi.path+'/HMI10.tif')
 print(A.datatype)
 print(A.geot)
 print(A.projection)
@@ -48,13 +50,13 @@ A.plot(cmap='Reds')
 shp = gp.read_file(pathcntrycyl+'DCW_countriescyl.shp')
 
 # Choose one country (COL)
-col = shp.loc[shp.ISO_A3=='COL']
+col = shp.loc[shp.ISO_A3 == 'COL']
 
 # Clip raster to geometry
 df = A.clip(col, keep=True)
 print(df)
 
-# Select clipped rester
+# Select clipped raster
 colraster = df.GeoRaster[0]
 colraster.plot(cmap='Reds')
 
@@ -63,3 +65,53 @@ colraster.pysal_G()
 colraster.pysal_Gamma()
 colraster.pysal_Geary()
 colraster.pysal_Join_Counts()
+
+# Path CSI data
+pathtestdata = gr.__path__[0]+'/../tests/data/'
+# Load raster data
+B = gr.from_file(pathtestdata+'pre1500.tif')
+# Load country geometries
+col2 = gp.read_file(pathtestdata+'COL.shp')
+#df2 = B.clip(col2.to_crs(crs=hmi.cea), keep=True)
+df2 = B.clip(col2, keep=True)
+print(df2)
+
+# Select clipped raster
+colraster2 = df2.GeoRaster[0]
+colraster2.plot(cmap='Reds')
+
+# Compute Global autocorrelation stats
+colraster2.pysal_G()
+colraster2.pysal_Gamma()
+colraster2.pysal_Geary()
+colraster2.pysal_Join_Counts()
+
+# CSI
+C = gr.from_file(geostats.pathmeasures['CSI']+'post1500AverageCaloriescyl.tif')
+df3 = C.clip(col2.to_crs(crs=hmi.cea), keep=True)
+print(df3)
+
+# Select clipped raster
+colraster3 = df3.GeoRaster[0]
+colraster3.plot(cmap='Reds')
+
+# Compute Global autocorrelation stats
+colraster3.pysal_G()
+colraster3.pysal_Gamma()
+colraster3.pysal_Geary()
+colraster3.pysal_Join_Counts()
+
+# CSI
+C = gr.from_file(geostats.pathmeasures['CSI']+'post1500AverageCaloriescyl.tif')
+df4 = C.clip(col2.to_crs(crs=hmi.cea), keep=True)
+print(df4)
+
+# Select clipped raster
+colraster4 = df4.GeoRaster[0]
+colraster4.plot(cmap='Reds')
+
+# Compute Global autocorrelation stats
+colraster4.pysal_G()
+colraster4.pysal_Gamma()
+colraster4.pysal_Geary()
+colraster4.pysal_Join_Counts()

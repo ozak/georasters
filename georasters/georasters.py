@@ -492,7 +492,7 @@ class GeoRaster(object):
 
         Returns plot of raster data
         '''
-        plt.matshow(self.raster, **kwargs)
+        return plt.matshow(self.raster, **kwargs)
 
     def union(self, other):
         '''
