@@ -267,7 +267,7 @@ class GeoRaster(object):
         self.projection = projection
         self.datatype = datatype
         self.mcp_cost = None
-
+        self.weights = None
 
     def __getitem__(self, indx):
         rast = self.raster.__getitem__(indx)
@@ -877,6 +877,14 @@ class GeoRaster(object):
         return GeoRaster(raster2, tuple(geot), nodata_value=self.nodata_value,\
                         projection=self.projection, datatype=self.datatype)
 
+    # Spatial Analysis based on PySal
+    def raster_weights(self, **kwargs):
+        """
+        Compute neighbor weights for GeoRaster
+        """
+        if self.weights is None:
+            self.weights = raster_weights(self.raster, **kwargs)
+
     # Setup Graph for distance computations and provide distance functions
     def mcp(self, *args, **kwargs):
         """
@@ -1205,7 +1213,7 @@ def raster_weights(raster, rook=False, transform='r', **kwargs):
     w = pysal.lat2W(*shape, rook=rook, **kwargs)
     
     # Identify missing/no data
-    if isinstance(rasterf, numpy.ma.core.MaskedArray):
+    if isinstance(rasterf, np.ma.core.MaskedArray):
         miss = rasterf.mask
     else:
         miss = np.logical_or(np.isnan(rasterf), np.isinf(rasterf))

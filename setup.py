@@ -4,6 +4,9 @@ import sys
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
 
+def read(fname):
+    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+
 def readme():
     with open('README.rst') as f:
         return f.read()
