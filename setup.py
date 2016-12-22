@@ -45,5 +45,4 @@ setup(name='georasters',
           'Topic :: Scientific/Engineering :: GIS',
       ],
       zip_safe=False,
-      long_description=readme(),
       )
