@@ -880,10 +880,30 @@ class GeoRaster(object):
     # Spatial Analysis based on PySal
     def raster_weights(self, **kwargs):
         """
-        Compute neighbor weights for GeoRaster
+        Compute neighbor weights for GeoRaster. 
+        See help(gr.raster_weights) for options
+
+        Usage:
+        geo.raster_weights(rook=True)
         """
         if self.weights is None:
             self.weights = raster_weights(self.raster, **kwargs)
+        pass
+
+    def pysal_G(self, **kwargs):
+        """
+        Compute Getis and Ord’s G for GeoRaster
+        
+        Usage:
+        geo.pysal_G(permutations = 1000, rook=True)
+        
+        arguments passed to raster_weights() and pysal.G
+        See help(gr.raster_weights), help(pysal.G) for options
+        """
+        if self.weights is None:
+            self.raster_weights(**kwargs)
+        self.pysal_G = pysal.G(self.raster.flatten()[nonmiss], self.weights)
+    pass
 
     # Setup Graph for distance computations and provide distance functions
     def mcp(self, *args, **kwargs):
@@ -1198,12 +1218,13 @@ def raster_weights(raster, rook=False, transform='r', **kwargs):
     It drops weights for all cells that have no data or are Inf/NaN
     Usage:
 
-    w = raster_weights(raster, rook=False, *args, **kwargs)
+    w = raster_weights(raster, rook=False, transform='r', **kwargs)
 
     where
         raster: (Masked) Numpy array for which weights are to be constructed
         rook: Boolean, type of contiguity. Default is queen. For rook, rook = True
-        the rest of arguments are passed to pysal.lat2W
+        **kwargs are defined by and passed to pysal.lat2W. 
+        See help(pysal.lat2W)
     """
     rasterf = raster.flatten()
     if len(raster.shape) == 1:
