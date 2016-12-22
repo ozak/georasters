@@ -123,3 +123,14 @@ print(df4)
 # Select clipped raster
 colraster5 = df4.GeoRaster[0]
 colraster5.plot(cmap='Reds')
+
+C = gr.from_file(geostats.pathmeasures['CSI']+'americasenmean.tif')
+df4 = C.clip(col2, keep=True)
+print(df4)
+# Select clipped raster
+colraster6 = df4.GeoRaster[0]
+colraster6.plot(cmap='Reds')
+
+# Bogota
+colraster6.extract(-74.075833,4.598056,1)
+colraster6.map_pixel(-74.075833,4.598056)
