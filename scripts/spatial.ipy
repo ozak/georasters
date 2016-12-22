@@ -87,7 +87,7 @@ colraster2.pysal_Geary()
 colraster2.pysal_Join_Counts()
 
 # CSI
-C = gr.from_file(geostats.pathmeasures['CSI']+'post1500AverageCaloriescyl.tif')
+C = gr.from_file(geostats.pathmeasures['CSI']+'post1500AverageCalories0cyl.tif')
 df3 = C.clip(col2.to_crs(crs=hmi.cea), keep=True)
 print(df3)
 
@@ -102,7 +102,7 @@ colraster3.pysal_Geary()
 colraster3.pysal_Join_Counts()
 
 # CSI
-C = gr.from_file(geostats.pathmeasures['CSI']+'post1500AverageCaloriescyl.tif')
+C = gr.from_file(geostats.pathmeasures['CSI']+'pre1500AverageCalories0cyl.tif')
 df4 = C.clip(col2.to_crs(crs=hmi.cea), keep=True)
 print(df4)
 
@@ -115,3 +115,11 @@ colraster4.pysal_G()
 colraster4.pysal_Gamma()
 colraster4.pysal_Geary()
 colraster4.pysal_Join_Counts()
+
+C = gr.from_file(geostats.pathmeasures['CSI']+'../updated/pre1500en0cyl.tif')
+df4 = C.clip(col2.to_crs(crs=hmi.cea), keep=True)
+print(df4)
+
+# Select clipped raster
+colraster5 = df4.GeoRaster[0]
+colraster5.plot(cmap='Reds')
