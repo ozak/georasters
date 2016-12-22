@@ -902,7 +902,7 @@ class GeoRaster(object):
         """
         if self.weights is None:
             self.raster_weights(**kwargs)
-        self.pysal_G = pysal.G(self.raster.flatten()[nonmiss], self.weights)
+        self.G = pysal.G(self.raster.flatten()[nonmiss], self.weights)
     pass
 
     # Setup Graph for distance computations and provide distance functions

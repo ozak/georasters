@@ -1,6 +1,8 @@
 [run]
 source = georasters
-include = */georasters/*
+include = 
+    */georasters/*
+    */tests/*
 omit =
     */python?.?/*
     */lib-python/?.?/*.py
