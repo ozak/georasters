@@ -902,7 +902,67 @@ class GeoRaster(object):
         """
         if self.weights is None:
             self.raster_weights(**kwargs)
-        self.G = pysal.G(self.raster.flatten()[nonmiss], self.weights)
+        self.G = pysal.G(self.raster.flatten()[nonmiss], self.weights, **kwargs)
+    pass
+
+    def pysal_Gamma(self, **kwargs):
+        """
+        Compute Gamma Index of Spatial Autocorrelation for GeoRaster
+        
+        Usage:
+        geo.pysal_Gamma(permutations = 1000, rook=True, operation='c')
+        
+        arguments passed to raster_weights() and pysal.Gamma
+        See help(gr.raster_weights), help(pysal.Gamma) for options
+        """
+        if self.weights is None:
+            self.raster_weights(**kwargs)
+        self.Gamma = pysal.Gamma(self.raster.flatten()[nonmiss], self.weights, **kwargs)
+    pass
+
+    def pysal_Join_Counts(self, **kwargs):
+        """
+        Compute join count statistics for GeoRaster
+        
+        Usage:
+        geo.pysal_Join_Counts(permutations = 1000, rook=True)
+        
+        arguments passed to raster_weights() and pysal.Join_Counts
+        See help(gr.raster_weights), help(pysal.Join_Counts) for options
+        """
+        if self.weights is None:
+            self.raster_weights(**kwargs)
+        self.Join_Counts = pysal.Join_Counts(self.raster.flatten()[nonmiss], self.weights, **kwargs)
+    pass
+
+    def pysal_Moran(self, **kwargs):
+        """
+        Compute Moran's I measure of global spatial autocorrelation for GeoRaster
+        
+        Usage:
+        geo.pysal_Moran(permutations = 1000, rook=True)
+        
+        arguments passed to raster_weights() and pysal.G
+        See help(gr.raster_weights), help(pysal.Moran) for options
+        """
+        if self.weights is None:
+            self.raster_weights(**kwargs)
+        self.Moran = pysal.Moran(self.raster.flatten()[nonmiss], self.weights, **kwargs)
+    pass
+
+    def pysal_C(self, **kwargs):
+        """
+        Compute Geary’s C for GeoRaster
+        
+        Usage:
+        geo.pysal_C(permutations = 1000, rook=True)
+        
+        arguments passed to raster_weights() and pysal.G
+        See help(gr.raster_weights), help(pysal.C) for options
+        """
+        if self.weights is None:
+            self.raster_weights(**kwargs)
+        self.C = pysal.C(self.raster.flatten()[nonmiss], self.weights, **kwargs)
     pass
 
     # Setup Graph for distance computations and provide distance functions
