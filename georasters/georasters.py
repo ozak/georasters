@@ -116,7 +116,7 @@ def create_geotiff(name, Array, driver, ndv, xsize, ysize, geot, projection, dat
     '''
     Creates new geotiff from array
     '''
-    if type(datatype) != np.int:
+    if isinstance(datatype, np.int) == False:
         if datatype.startswith('gdal.GDT_') == False:
             datatype = eval('gdal.GDT_'+datatype)
     newfilename = name+'.tif'
@@ -1205,7 +1205,7 @@ def raster_weights(raster, rook=False, transform='r', **kwargs):
     w = pysal.lat2W(*shape, rook=rook, **kwargs)
     
     # Identify missing/no data
-    if type(rasterf) == numpy.ma.core.MaskedArray:
+    if isinstance(rasterf, numpy.ma.core.MaskedArray):
         miss = rasterf.mask
     else:
         miss = np.logical_or(np.isnan(rasterf), np.isinf(rasterf))
