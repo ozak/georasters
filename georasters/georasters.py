@@ -268,6 +268,11 @@ class GeoRaster(object):
         self.datatype = datatype
         self.mcp_cost = None
         self.weights = None
+        self.G = None
+        self.Gamma = None
+        self.Join_Counts = None
+        self.Moran = None
+        self.Geary = None
 
     def __getitem__(self, indx):
         rast = self.raster.__getitem__(indx)
@@ -902,7 +907,9 @@ class GeoRaster(object):
         """
         if self.weights is None:
             self.raster_weights(**kwargs)
-        self.G = pysal.G(self.raster.flatten()[nonmiss], self.weights, **kwargs)
+        rasterf = self.raster.flatten()
+        rasterf = rasterf[rasterf.mask==False]
+        self.G = pysal.G(rasterf, self.weights, **kwargs)
     pass
 
     def pysal_Gamma(self, **kwargs):
@@ -917,7 +924,9 @@ class GeoRaster(object):
         """
         if self.weights is None:
             self.raster_weights(**kwargs)
-        self.Gamma = pysal.Gamma(self.raster.flatten()[nonmiss], self.weights, **kwargs)
+        rasterf = self.raster.flatten()
+        rasterf = rasterf[rasterf.mask==False]
+        self.Gamma = pysal.Gamma(rasterf, self.weights, **kwargs)
     pass
 
     def pysal_Join_Counts(self, **kwargs):
@@ -932,7 +941,9 @@ class GeoRaster(object):
         """
         if self.weights is None:
             self.raster_weights(**kwargs)
-        self.Join_Counts = pysal.Join_Counts(self.raster.flatten()[nonmiss], self.weights, **kwargs)
+        rasterf = self.raster.flatten()
+        rasterf = rasterf[rasterf.mask==False]
+        self.Join_Counts = pysal.Join_Counts(rasterf, self.weights, **kwargs)
     pass
 
     def pysal_Moran(self, **kwargs):
@@ -947,10 +958,12 @@ class GeoRaster(object):
         """
         if self.weights is None:
             self.raster_weights(**kwargs)
-        self.Moran = pysal.Moran(self.raster.flatten()[nonmiss], self.weights, **kwargs)
+        rasterf = self.raster.flatten()
+        rasterf = rasterf[rasterf.mask==False]
+        self.Moran = pysal.Moran(rasterf, self.weights, **kwargs)
     pass
 
-    def pysal_C(self, **kwargs):
+    def pysal_Geary(self, **kwargs):
         """
         Compute Geary’s C for GeoRaster
         
@@ -962,7 +975,9 @@ class GeoRaster(object):
         """
         if self.weights is None:
             self.raster_weights(**kwargs)
-        self.C = pysal.C(self.raster.flatten()[nonmiss], self.weights, **kwargs)
+        rasterf = self.raster.flatten()
+        rasterf = rasterf[rasterf.mask==False]
+        self.Geary = pysal.Geary(rasterf, self.weights, **kwargs)
     pass
 
     # Setup Graph for distance computations and provide distance functions
