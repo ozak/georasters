@@ -137,10 +137,10 @@ def align_rasters(raster, alignraster, how=np.ma.mean, cxsize=None, cysize=None,
     '''
     Align two rasters so that data overlaps by geographical location
     Usage:
-    
+
     (alignedraster_o, alignedraster_a, geot_a) = AlignRasters(raster, alignraster, how=np.mean)
-    
-    where 
+
+    where
         raster: string with location of raster to be aligned
         alignraster: string with location of raster to which raster will be aligned
         how: function used to aggregate cells (if the rasters have different sizes)
@@ -176,7 +176,8 @@ def align_rasters(raster, alignraster, how=np.ma.mean, cxsize=None, cysize=None,
         col3 = max(0,col3)
         row3 = max(0,row3)
         araster = araster[row3:,col3:]
-        col3,row3 = map_pixel(geot2[0], geot2[3], geot1[1] *blocksize[0],geot1[-1]*blocksize[1], geot1[0], geot1[3])
+        col3,row3 = map_pixel(geot2[0], geot2[3], geot1[1] *blocksize[0],
+                              geot1[-1]*blocksize[1], geot1[0], geot1[3])
         col3 = max(0,abs(col3))
         row3 = max(0,np.abs(row3))
         mraster = mraster[row3:,col3:]
@@ -195,7 +196,7 @@ def align_rasters(raster, alignraster, how=np.ma.mean, cxsize=None, cysize=None,
         if masked:
             mraster = np.ma.masked_array(mraster, mask=mraster < mmin, fill_value=ndv1)
             araster = np.ma.masked_array(araster, mask=araster < amin, fill_value=ndv2)
-        geot = (max(geot1[0], geot2[0]), geot1[1]*blocksize[0], geot1[2], 
+        geot = (max(geot1[0], geot2[0]), geot1[1]*blocksize[0], geot1[2],
                 min(geot1[3], geot2[3]), geot1[4], geot1[-1]*blocksize[1])
         return (mraster, araster, geot)
     else:
@@ -349,7 +350,8 @@ class GeoRaster(object):
     def __add__(self, other):
         if isinstance(other, GeoRaster):
             if self.geot != other.geot:
-                raise RasterGeoTWarning("Rasters do not have same geotransform. If needed first create union or allign them.")
+                raise RasterGeoTWarning("Rasters do not have same geotransform. \
+                                        If needed first create union or allign them.")
             if self.nodata_value == other.nodata_value:
                 ndv = self.nodata_value
             else:
@@ -372,7 +374,8 @@ class GeoRaster(object):
     def __mul__(self, other):
         if isinstance(other, GeoRaster):
             if self.geot != other.geot:
-                raise RasterGeoTWarning("Rasters do not have same geotransform. If needed first create union or allign them.")
+                raise RasterGeoTWarning("Rasters do not have same geotransform. \
+                                        If needed first create union or allign them.")
             if self.nodata_value == other.nodata_value:
                 ndv = self.nodata_value
             else:
@@ -389,7 +392,8 @@ class GeoRaster(object):
     def __truediv__(self, other):
         if isinstance(other, GeoRaster):
             if self.geot != other.geot:
-                raise RasterGeoTWarning("Rasters do not have same geotransform. If needed first create union or allign them.")
+                raise RasterGeoTWarning("Rasters do not have same geotransform. \
+                                        If needed first create union or allign them.")
             if self.nodata_value == other.nodata_value:
                 ndv = self.nodata_value
             else:
@@ -415,7 +419,8 @@ class GeoRaster(object):
     def __rfloordiv__(self, other):
         if isinstance(other, GeoRaster):
             if self.geot != other.geot:
-                raise RasterGeoTWarning("Rasters do not have same geotransform. If needed first create union or allign them.")
+                raise RasterGeoTWarning("Rasters do not have same geotransform. \
+                                        If needed first create union or allign them.")
             if self.nodata_value == other.nodata_value:
                 ndv = self.nodata_value
             else:
@@ -430,7 +435,8 @@ class GeoRaster(object):
     def __pow__(self, other):
         if isinstance(other, GeoRaster):
             if self.geot != other.geot:
-                raise RasterGeoTWarning("Rasters do not have same geotransform. If needed first create union or allign them.")
+                raise RasterGeoTWarning("Rasters do not have same geotransform. \
+                                        If needed first create union or allign them.")
             if self.nodata_value == other.nodata_value:
                 ndv = self.nodata_value
             else:
@@ -449,9 +455,9 @@ class GeoRaster(object):
     def to_tiff(self, filename):
         '''
         geo.to_tiff(filename)
-        
+
         Saves GeoRaster as geotiff filename.tif with type datatype
-        
+
         If GeoRaster does not have datatype, then it tries to assign a type.
         You can assign the type yourself by setting
          geo.datatype = 'gdal.GDT_'+type
@@ -555,7 +561,7 @@ class GeoRaster(object):
     def median(self, *args, **kwargs):
         '''
         geo.median(axis=None, out=None, overwrite_input=False)
-        
+
         axis : int, optional
             Axis along which the medians are computed. The default (axis=None)
             is to compute the median along a flattened version of the array.
@@ -673,9 +679,9 @@ class GeoRaster(object):
         Returns list of GeoRasters or Pandas DataFrame with GeoRasters and additional information
 
         Usage:
-        
+
         clipped = geo.clip(shape, keep=False)
-        
+
         where:
         keep: Boolean (Default False), returns Georasters and Geometry information
         '''
@@ -684,10 +690,10 @@ class GeoRaster(object):
                                       geojson_out=keep,))
         if keep:
             df['GeoRaster'] = df.properties.apply(lambda x: GeoRaster(x['mini_raster_array'],
-                                                                Affine.to_gdal(x['mini_raster_affine']),
-                                                                nodata_value=x['mini_raster_nodata'],
-                                                                projection=self.projection,
-                                                                datatype=self.datatype))
+                                                                      Affine.to_gdal(x['mini_raster_affine']),
+                                                                      nodata_value=x['mini_raster_nodata'],
+                                                                      projection=self.projection,
+                                                                      datatype=self.datatype))
             cols = list(set([i for i in df.properties[0].iterkeys()]).intersection(set(shp.columns)))
             df2 = pd.DataFrame([df.properties.apply(lambda x: x[i]) for i in df.properties[0].iterkeys()
                                 if i in cols]).T.merge(df[['GeoRaster']], left_index=True, right_index=True,)
@@ -696,32 +702,38 @@ class GeoRaster(object):
             df2.set_index('id', inplace=True)
             return df2
         else:
-            df['GeoRaster'] = df.apply(lambda x: GeoRaster(x.mini_raster_array, Affine.to_gdal(x.mini_raster_affine), 
-                                        nodata_value=x.mini_raster_nodata, projection=self.projection,
-                                        datatype=self.datatype), axis=1)
+            df['GeoRaster'] = df.apply(lambda x: GeoRaster(x.mini_raster_array,
+                                                           Affine.to_gdal(x.mini_raster_affine),
+                                                           nodata_value=x.mini_raster_nodata,
+                                                           projection=self.projection,
+                                                           datatype=self.datatype), axis=1)
             return df['GeoRaster'].values
 
     def stats(self, shp, stats=None, add_stats=None, raster_out=True, *args, **kwargs):
         '''
-        Compute raster statistics for a given geometry in shape, where shape is either 
+        Compute raster statistics for a given geometry in shape, where shape is either
         a GeoPandas DataFrame, shapefile, or some other geometry format used by
-        python-raster-stats. Runs python-raster-stats in background 
+        python-raster-stats. Runs python-raster-stats in background
         (additional help and info can be found there)
-        
+
         Returns dataframe with statistics and clipped raster
-        
+
         Usage:
-        
+
         df = geo.stats(shape, stats=stats, add_stats=add_stats)
-        
+
         where:
         raster_out: If True (Default), returns clipped Georasters
         '''
-        df = pd.DataFrame(zonal_stats(shp, self.raster, nodata=self.nodata_value, all_touched=True, raster_out=raster_out,
-                            affine=Affine.from_gdal(*self.geot), geojson_out=True, stats=None, add_stats=None))
-        df['GeoRaster'] = df.properties.apply(lambda x: GeoRaster(x['mini_raster_array'], Affine.to_gdal(x['mini_raster_affine']), 
-                                    nodata_value=x['mini_raster_nodata'], projection=self.projection,
-                                    datatype=self.datatype))
+        df = pd.DataFrame(zonal_stats(shp, self.raster, nodata=self.nodata_value,
+                                      all_touched=True, raster_out=raster_out,
+                                      affine=Affine.from_gdal(*self.geot),
+                                      geojson_out=True, stats=None, add_stats=None))
+        df['GeoRaster'] = df.properties.apply(lambda x: GeoRaster(x['mini_raster_array'],
+                                                                  Affine.to_gdal(x['mini_raster_affine']),
+                                                                  nodata_value=x['mini_raster_nodata'],
+                                                                  projection=self.projection,
+                                                                  datatype=self.datatype))
         statcols = list(set([i for i in df.properties[0].iterkeys()]).difference(set(shp.columns)))
         cols = shp.columns.tolist()+statcols
         cols = [i for i in cols if i != 'geometry' and i.find('mini_raster') == -1]
@@ -734,7 +746,7 @@ class GeoRaster(object):
     def gini(self):
         """
         geo.gini()
-        
+
         Return computed Gini coefficient.
         """
         if self.count()>1:
@@ -763,9 +775,9 @@ class GeoRaster(object):
     def apply(self, func, *args, **kwargs):
         '''
         geo.apply(func, *args, **kwargs)
-        
+
         Returns the value of applying function func on the raster data
-        
+
         func: Python function
         *args: Arguments of function
         **kwargs: Additional arguments of function
@@ -775,37 +787,43 @@ class GeoRaster(object):
     def map_pixel(self, point_x, point_y):
         '''
         geo.map_pixel(point_x, point_y)
-        
-        Return value of raster in location 
-        Note: (point_x, point_y) must belong to the geographic coordinate system and the coverage of the raster
+
+        Return value of raster in location
+        Note: (point_x, point_y) must belong to the geographic coordinate system and
+        the coverage of the raster
         '''
-        row, col = map_pixel(point_x, point_y, self.x_cell_size, self.y_cell_size, self.xmin, self.ymax)
+        row, col = map_pixel(point_x, point_y,
+                             self.x_cell_size, self.y_cell_size, self.xmin, self.ymax)
         try:
             return self.raster[row, col]
         except:
-            raise RasterGeoError('Make sure the point belongs to the raster coverage and it is in the correct geographic coordinate system.')
+            raise RasterGeoError('Make sure the point belongs to the raster coverage \
+                                 and it is in the correct geographic coordinate system.')
 
     def map_pixel_location(self, point_x, point_y):
         '''
         geo.map_pixel(point_x, point_y)
-        
-        Return value of raster in location 
+
+        Return value of raster in location
         '''
-        row, col = map_pixel(point_x, point_y, self.x_cell_size, self.y_cell_size, self.xmin, self.ymax)
+        row, col = map_pixel(point_x, point_y, self.x_cell_size, self.y_cell_size,
+                             self.xmin, self.ymax)
         return np.array([row, col])
 
     def extract(self, point_x, point_y, radius=0):
         '''
         geo.extract(x, y, radius=r)
-        
+
         Return subraster of raster geo around location (x,y) with radius r
         where (x,y) and r are in the same coordinate system as geo
         '''
-        row, col = map_pixel(point_x, point_y, self.x_cell_size, self.y_cell_size, self.xmin, self.ymax)
+        row, col = map_pixel(point_x, point_y, self.x_cell_size, self.y_cell_size,
+                             self.xmin, self.ymax)
         col2 = np.abs(radius/self.x_cell_size).astype(int)
         row2 = np.abs(radius/self.y_cell_size).astype(int)
         return GeoRaster(self.raster[max(row-row2, 0):min(row+row2+1, self.shape[0]), \
-                        max(col-col2, 0):min(col+col2+1, self.shape[1])], self.geot, nodata_value=self.nodata_value,\
+                        max(col-col2, 0):min(col+col2+1, self.shape[1])], self.geot,
+                        nodata_value=self.nodata_value,\
                         projection=self.projection, datatype=self.datatype)
 
     # Align GeoRasters
@@ -825,7 +843,8 @@ class GeoRaster(object):
         '''
         raster2 = block_reduce(self.raster, block_size, func=np.ma.sum)
         geot = self.geot
-        geot = (geot[0], block_size[0] * geot[1], geot[2], geot[3], geot[4], block_size[1] * geot[-1])
+        geot = (geot[0], block_size[0] * geot[1], geot[2], geot[3], geot[4],
+                block_size[1] * geot[-1])
         return GeoRaster(raster2, geot, nodata_value=self.nodata_value,\
                         projection=self.projection, datatype=self.datatype)
 
@@ -843,13 +862,15 @@ class GeoRaster(object):
     def resize(self, block_size, order=0, mode='constant', cval=False, preserve_range=True):
         '''
         geo.resize(new_shape, order=0, mode='constant', cval=np.nan, preserve_range=True)
-        
+
         Returns resized georaster
         '''
         if not cval:
             cval = np.nan
-        raster2 = resize(self.raster.data, block_size, order=order, mode=mode, cval=cval, preserve_range=preserve_range)
-        mask = resize(self.raster.mask, block_size, order=order, mode=mode, cval=cval, preserve_range=preserve_range)
+        raster2 = resize(self.raster.data, block_size, order=order, mode=mode,
+                         cval=cval, preserve_range=preserve_range)
+        mask = resize(self.raster.mask, block_size, order=order, mode=mode,
+                      cval=cval, preserve_range=preserve_range)
         raster2 = np.ma.masked_array(raster2, mask=mask, fill_value=self.raster.fill_value)
         raster2[raster2.mask] = self.nodata_value
         raster2.mask = np.logical_or(np.isnan(raster2.data), raster2.data == self.nodata_value)
@@ -861,19 +882,21 @@ class GeoRaster(object):
     def resize_old(self, block_size, order=0, mode='constant', cval=False):
         '''
         geo.resize(new_shape, order=0, mode='constant', cval=np.nan, preserve_range=True)
-        
+
         Returns resized georaster
         '''
         if not cval:
             cval = np.nan
-        if self.raster.dtype.name.find('float') != -1 and np.max(np.abs([self.max(), self.min()])) > 1:
+        if (self.raster.dtype.name.find('float') != -1 and
+            np.max(np.abs([self.max(), self.min()])) > 1):
             raster2 = (self.raster-self.min())/(self.max()-self.min())
         else:
             raster2 = self.raster.copy()
         raster2 = raster2.astype(float)
         raster2[self.raster.mask] = np.nan
         raster2 = resize(raster2, block_size, order=order, mode=mode, cval=cval)
-        raster2 = np.ma.masked_array(raster2, mask=np.isnan(raster2), fill_value=self.raster.fill_value)
+        raster2 = np.ma.masked_array(raster2, mask=np.isnan(raster2),
+                                     fill_value=self.raster.fill_value)
         raster2 = raster2*(self.max()-self.min())+self.min()
         raster2[raster2.mask] = self.nodata_value
         raster2.mask = np.logical_or(np.isnan(raster2.data), raster2.data == self.nodata_value)
@@ -885,7 +908,7 @@ class GeoRaster(object):
     # Spatial Analysis based on PySal
     def raster_weights(self, **kwargs):
         """
-        Compute neighbor weights for GeoRaster. 
+        Compute neighbor weights for GeoRaster.
         See help(gr.raster_weights) for options
 
         Usage:
@@ -898,10 +921,10 @@ class GeoRaster(object):
     def pysal_G(self, **kwargs):
         """
         Compute Getis and Ord’s G for GeoRaster
-        
+
         Usage:
         geo.pysal_G(permutations = 1000, rook=True)
-        
+
         arguments passed to raster_weights() and pysal.G
         See help(gr.raster_weights), help(pysal.G) for options
         """
@@ -915,10 +938,10 @@ class GeoRaster(object):
     def pysal_Gamma(self, **kwargs):
         """
         Compute Gamma Index of Spatial Autocorrelation for GeoRaster
-        
+
         Usage:
         geo.pysal_Gamma(permutations = 1000, rook=True, operation='c')
-        
+
         arguments passed to raster_weights() and pysal.Gamma
         See help(gr.raster_weights), help(pysal.Gamma) for options
         """
@@ -932,10 +955,10 @@ class GeoRaster(object):
     def pysal_Join_Counts(self, **kwargs):
         """
         Compute join count statistics for GeoRaster
-        
+
         Usage:
         geo.pysal_Join_Counts(permutations = 1000, rook=True)
-        
+
         arguments passed to raster_weights() and pysal.Join_Counts
         See help(gr.raster_weights), help(pysal.Join_Counts) for options
         """
@@ -949,10 +972,10 @@ class GeoRaster(object):
     def pysal_Moran(self, **kwargs):
         """
         Compute Moran's I measure of global spatial autocorrelation for GeoRaster
-        
+
         Usage:
         geo.pysal_Moran(permutations = 1000, rook=True)
-        
+
         arguments passed to raster_weights() and pysal.G
         See help(gr.raster_weights), help(pysal.Moran) for options
         """
@@ -966,10 +989,10 @@ class GeoRaster(object):
     def pysal_Geary(self, **kwargs):
         """
         Compute Geary’s C for GeoRaster
-        
+
         Usage:
         geo.pysal_C(permutations = 1000, rook=True)
-        
+
         arguments passed to raster_weights() and pysal.G
         See help(gr.raster_weights), help(pysal.C) for options
         """
@@ -994,24 +1017,27 @@ class GeoRaster(object):
                  export_raster=False, export_shape=False, routes=False, path='./'):
         """
         Compute cost distance measured from each start point to all end points.
-        The function returns the distances between the start point and the end 
+        The function returns the distances between the start point and the end
         points as a Pandas dataframe. Additionally, for each start point it computes
         the level of isolation, i.e. its average travel distance to all other locations
         """
         start_points = sources.copy()
         end_points = destinations.copy()
-        if not isinstance(start_points, pd.core.frame.DataFrame) and not isinstance(start_points, gp.geodataframe.GeoDataFrame):
+        if (not isinstance(start_points, pd.core.frame.DataFrame) and
+            not isinstance(start_points, gp.geodataframe.GeoDataFrame)):
             raise TypeError('Sources has to be a (Geo)Pandas Data Frame Object.')
-        if not isinstance(end_points, pd.core.frame.DataFrame) and not isinstance(end_points, gp.geodataframe.GeoDataFrame):
+        if (not isinstance(end_points, pd.core.frame.DataFrame) and
+            not isinstance(end_points, gp.geodataframe.GeoDataFrame)):
             raise TypeError('Destinations has to be a (Geo)Pandas Data Frame Object.')
         if not self.mcp_cost:
             self.mcp()
         count = 0
-        start_points['row'], start_points['col'] = self.map_pixel_location(start_points[x], start_points[y])
+        start_points['row'], start_points['col'] = self.map_pixel_location(start_points[x],
+                                                                           start_points[y])
         end_points['row'], end_points['col'] = self.map_pixel_location(end_points[x], end_points[y])
         start_points['ID'] = start_points.index.values
         end_points['ID'] = end_points.index.values+start_points['ID'].max()+1
-        
+
         for i in start_points.iterrows():
             cumulative_costs, traceback = self.mcp_cost.find_costs([[i[1].row, i[1].col]])
             dist = cumulative_costs[end_points.row.values, end_points.col.values].transpose()/(7*24)
@@ -1027,9 +1053,10 @@ class GeoRaster(object):
                 start_points.loc[i[0], 'Iso'] = grisolation
             if export_raster:
                 cumulative_costs = GeoRaster(np.ma.masked_array(cumulative_costs,
-                                                    mask=np.logical_or(self.raster.mask, cumulative_costs == np.inf),
-                                                    fill_value=np.nan), self.geot, self.nodata_value,
-                                                    projection=self.projection, datatype=self.datatype)
+                                                                mask=np.logical_or(self.raster.mask,
+                                                                                   cumulative_costs == np.inf),
+                                                                fill_value=np.nan), self.geot, self.nodata_value,
+                                             projection=self.projection, datatype=self.datatype)
                 cumulative_costs.raster.data[cumulative_costs.raster.mask] = cumulative_costs.nodata_value
                 cumulative_costs.to_tiff(path+str(i[1]['ID']))
             if df2.size > 0:
@@ -1040,7 +1067,8 @@ class GeoRaster(object):
                                                 self.mcp_cost.traceback(end_points.loc[end_points['ID'] == x][['row', 'col']].values[0]))
                     df2['geometry'] = df2.geometry.apply(lambda x: [map_pixel_inv(y[0], y[1], self.geot[1],
                                                     self.geot[-1], self.geot[0], self.geot[-3]) for y in x])
-                    df2['geometry'] = df2.geometry.apply(lambda x: LineString(x) if int(len(x) > 1) else LineString([x[0], x[0]]))
+                    df2['geometry'] = df2.geometry.apply(lambda x: LineString(x) if int(len(x) > 1)
+                                                         else LineString([x[0], x[0]]))
                     df2 = gp.GeoDataFrame(df2, crs=cea)
                 if isolation:
                     df2['Iso'] = grisolation
@@ -1055,7 +1083,7 @@ class GeoRaster(object):
             start_pointscols = sources.columns.values
             end_pointscols = destinations.columns.values
             if 'geometry' in end_pointscols:
-                self.grdist = pd.merge(self.grdist, end_points[['ID']+end_pointscols.tolist()].drop('geometry', axis=1), left_on='ID2', right_on='ID', how='left')
+                self.grdist = pd.merge(self.grdist, end_points[['ID'] + end_pointscols.tolist()].drop('geometry', axis=1), left_on='ID2', right_on='ID', how='left')
             else:
                 self.grdist = pd.merge(self.grdist, end_points[['ID']+end_pointscols.tolist()], left_on='ID2', right_on='ID', how='left')
             if 'geometry' in self.start_pointscols:
@@ -1139,12 +1167,13 @@ def from_pandas(df, value='value', x='x', y='y', cellx=None, celly=None, xmin=No
     """
     Creates a GeoRaster from a Pandas DataFrame. Useful to plot or export data to rasters.
     Usage:
-        raster = from_pandas(df, value='value', x='x', y='y', cellx= cellx, celly=celly, xmin=xmin, ymax=ymax,
-                        geot=geot, nodata_value=ndv, projection=projection, datatype=datatype)
+        raster = from_pandas(df, value='value', x='x', y='y', cellx= cellx, celly=celly,
+                             xmin=xmin, ymax=ymax, geot=geot, nodata_value=ndv,
+                             projection=projection, datatype=datatype)
 
-    Although it does not require all the inputs, it is highly recommended to include the geographical information, 
-    so that the GeoRaster is properly constructed. As usual, the information can be added afterwards directly to the 
-    GeoRaster.
+    Although it does not require all the inputs, it is highly recommended to include
+    the geographical information, so that the GeoRaster is properly constructed. As usual,
+    the information can be added afterwards directly to the GeoRaster.
     """
     if not cellx:
         cellx = (df.sort(x)[x]-df.sort(x).shift(1)[x]).max()
@@ -1190,8 +1219,15 @@ def align_georasters(raster, alignraster, how=np.mean, cxsize=None, cysize=None)
         how: function used to aggregate cells (if the rasters have different sizes)
     It is assumed that both rasters have the same size
     '''
-    (ndv1, xsize1, ysize1, geot1, projection1, datatype1) = (raster.nodata_value, raster.shape[1], raster.shape[0], raster.geot, raster.projection, raster.datatype)
-    (ndv2, xsize2, ysize2, geot2, projection2, datatype2) = (alignraster.nodata_value, alignraster.shape[1], alignraster.shape[0], alignraster.geot, alignraster.projection, alignraster.datatype)
+    (ndv1, xsize1, ysize1, geot1, projection1, datatype1) = (raster.nodata_value, raster.shape[1],
+                                                             raster.shape[0], raster.geot,
+                                                             raster.projection, raster.datatype)
+    (ndv2, xsize2, ysize2, geot2, projection2, datatype2) = (alignraster.nodata_value,
+                                                             alignraster.shape[1],
+                                                             alignraster.shape[0],
+                                                             alignraster.geot,
+                                                             alignraster.projection,
+                                                             alignraster.datatype)
     if projection1.ExportToMICoordSys() == projection2.ExportToMICoordSys():
         blocksize = (np.round(max(geot2[1]/geot1[1], 1)), np.round(max(geot2[-1]/geot1[-1], 1)))
         mraster = raster.raster
@@ -1204,7 +1240,8 @@ def align_georasters(raster, alignraster, how=np.mean, cxsize=None, cysize=None)
         if block_reduce != (1, 1):
             araster = block_reduce(araster, blocksize, func=how)
         if geot1[0] <= geot2[0]:
-            row3, mcol = map_pixel(geot2[0], geot2[3], geot1[1] *blocksize[0], geot1[-1]*blocksize[1], geot1[0], geot1[3])
+            row3, mcol = map_pixel(geot2[0], geot2[3], geot1[1] *blocksize[0],
+                                   geot1[-1]*blocksize[1], geot1[0], geot1[3])
             acol = 0
         else:
             row3, acol = map_pixel(geot1[0], geot1[3], geot2[1], geot2[-1], geot2[0], geot2[3])
@@ -1213,7 +1250,8 @@ def align_georasters(raster, alignraster, how=np.mean, cxsize=None, cysize=None)
             arow, col3 = map_pixel(geot1[0], geot1[3], geot2[1], geot2[-1], geot2[0], geot2[3])
             mrow = 0
         else:
-            mrow, col3 = map_pixel(geot2[0], geot2[3], geot1[1] *blocksize[0], geot1[-1]*blocksize[1], geot1[0], geot1[3])
+            mrow, col3 = map_pixel(geot2[0], geot2[3], geot1[1] *blocksize[0],
+                                   geot1[-1]*blocksize[1], geot1[0], geot1[3])
             arow = 0
         mraster = mraster[mrow:, mcol:]
         araster = araster[arow:, acol:]
@@ -1227,9 +1265,12 @@ def align_georasters(raster, alignraster, how=np.mean, cxsize=None, cysize=None)
             mraster = mraster[:rows, :cols]
         mraster = np.ma.masked_array(mraster, mask=mraster < mmin, fill_value=ndv1)
         araster = np.ma.masked_array(araster, mask=araster < amin, fill_value=ndv2)
-        geot = (max(geot1[0], geot2[0]), geot1[1]*blocksize[0], geot1[2], min(geot1[3], geot2[3]), geot1[4], geot1[-1]*blocksize[1])
-        mraster = GeoRaster(mraster, geot, projection=projection1, nodata_value=ndv1, datatype=datatype1)
-        araster = GeoRaster(araster, geot, projection=projection2, nodata_value=ndv2, datatype=datatype2)
+        geot = (max(geot1[0], geot2[0]), geot1[1]*blocksize[0], geot1[2], min(geot1[3], geot2[3]),
+                geot1[4], geot1[-1]*blocksize[1])
+        mraster = GeoRaster(mraster, geot, projection=projection1,
+                            nodata_value=ndv1, datatype=datatype1)
+        araster = GeoRaster(araster, geot, projection=projection2,
+                            nodata_value=ndv2, datatype=datatype2)
         return (mraster, araster)
     else:
         print("Rasters need to be in same projection")
@@ -1237,12 +1278,14 @@ def align_georasters(raster, alignraster, how=np.mean, cxsize=None, cysize=None)
 
 # Test if two GeoRasters are in same geot and have same projection
 def is_geovalid(grasterlist):
-    if np.sum(map(isinstance,grasterlist, [GeoRaster for i in range(len(grasterlist))])) == len(grasterlist):
+    if np.sum(map(isinstance,grasterlist,
+                  [GeoRaster for i in range(len(grasterlist))])) == len(grasterlist):
         graster0 = grasterlist[-1]
         while grasterlist != []:
             grasterlist = grasterlist[:-1]
             graster1 = grasterlist[-1]
-            if graster1.geot == graster0.geot and graster1.projection.ExportToPrettyWkt() == graster0.ExportToPrettyWkt():
+            if (graster1.geot == graster0.geot and
+                graster1.projection.ExportToPrettyWkt() == graster0.ExportToPrettyWkt()):
                 return 0
             else:
                 raise RasterGeoTError("Rasters must have same geotransform and projection.")
@@ -1276,8 +1319,8 @@ def squares(row, georaster=None):
 
 def to_geopandas(raster):
     """
-    Convert GeoRaster to GeoPandas DataFrame, which can be easily exported to other types of files and used to 
-    do other types of operations.
+    Convert GeoRaster to GeoPandas DataFrame, which can be easily exported to other types of files
+    and used to do other types of operations.
     The DataFrame has the geometry (Polygon), row, col, value, x, and y values for each cell
     Usage:
         df = gr.to_geopandas(raster)
@@ -1298,7 +1341,7 @@ def raster_weights(raster, rook=False, transform='r', **kwargs):
     where
         raster: (Masked) Numpy array for which weights are to be constructed
         rook: Boolean, type of contiguity. Default is queen. For rook, rook = True
-        **kwargs are defined by and passed to pysal.lat2W. 
+        **kwargs are defined by and passed to pysal.lat2W.
         See help(pysal.lat2W)
     """
     rasterf = raster.flatten()
@@ -1307,28 +1350,28 @@ def raster_weights(raster, rook=False, transform='r', **kwargs):
     else:
         shape = raster.shape
     w = pysal.lat2W(*shape, rook=rook, **kwargs)
-    
+
     # Identify missing/no data
     if isinstance(rasterf, np.ma.core.MaskedArray):
         miss = rasterf.mask
     else:
         miss = np.logical_or(np.isnan(rasterf), np.isinf(rasterf))
     missn = set(np.arange(0, len(miss))[miss])
-    
+
     cneighbors = {}
     for key, value in w.neighbors.items():
         if key not in missn:
             value = list(set(value).difference(missn))
             cneighbors[key] = value
     w = pysal.W(cneighbors)
-    w.transform = transform 
+    w.transform = transform
     return w
 
 def map_vector(x, raster, **kvars):
     """
     Create new GeoRaster, which has its data replaced by x
     Useful to map output of PySal analyses, e.g. spatial autocorrelation values, etc.
-    
+
     Usage: raster2 = map_vector(x, raster)
     where
         raster: GeoRaster
