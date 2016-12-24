@@ -125,7 +125,7 @@ def create_geotiff(name, Array, driver, ndv, xsize, ysize, geot, projection, dat
     # Set up the dataset
     DataSet = driver.Create(newfilename, xsize, ysize, 1, datatype)
     # the '1' is for band 1.
-    DataSet.Setgeotransform(geot)
+    DataSet.SetGeoTransform(geot)
     DataSet.SetProjection(projection.ExportToWkt())
     # Write the array
     DataSet.GetRasterBand(1).WriteArray(Array)
