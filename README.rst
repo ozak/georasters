@@ -46,6 +46,9 @@ It includes tools to
 - Get all the geographical information of raster
 - Create GeoTiff files easily
 - Load GeoTiff files as masked numpy rasters
+- Clip raster using geometries
+- Get zonal statistics using geometries
+- Spatial analysis tools
 
 Install
 -------
