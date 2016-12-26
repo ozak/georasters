@@ -29,10 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import division
 import georasters as gr
-import hmi
 import geopandas as gp
-import geostats
-import hmi
 import os
 
 # Path to data
