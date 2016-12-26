@@ -150,3 +150,12 @@ Example Usage: Other functions
 	# Merge both rasters and plot
 	C=B.merge(A)
 	C.plot()
+
+Issues
+------
+
+Find a bug? Report it via Github issues by providing
+
+- a link to download the smallest possible raster and vector dataset necessary to reproduce the error
+- python code or command to reproduce the error
+- information on your environment: versions of python, gdal and numpy and system memory
