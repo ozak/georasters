@@ -91,9 +91,13 @@ Example Merge GeoRasters:
 	data1.plot()
 	plt.savefig(os.path.join(DATA, 'data1.png'), bbox_inches='tight')
 
+![plot1](./tests/data/data1.png)
+
 	plt.figure(figsize=(12,8))
 	data2.plot()
 	plt.savefig(os.path.join(DATA,'data2.png'), bbox_inches='tight')
+
+![plot2](./tests/data/data2.png)
 
 	# Generate merged raster
 
@@ -103,6 +107,9 @@ Example Merge GeoRasters:
 	plt.figure(figsize=(12,8))
 	data3.plot()
 	plt.savefig(os.path.join(DATA,'data3.png'), bbox_inches='tight')
+
+![plot3](./tests/data/data3.png)
+
 
 Another Merge:
 ==============
