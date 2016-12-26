@@ -274,6 +274,7 @@ class GeoRaster(object):
         self.Join_Counts = None
         self.Moran = None
         self.Geary = None
+        self.Moran_Local = None
 
     def __getitem__(self, indx):
         rast = self.raster.__getitem__(indx)
@@ -976,7 +977,7 @@ class GeoRaster(object):
         Usage:
         geo.pysal_Moran(permutations = 1000, rook=True)
 
-        arguments passed to raster_weights() and pysal.G
+        arguments passed to raster_weights() and pysal.Moran
         See help(gr.raster_weights), help(pysal.Moran) for options
         """
         if self.weights is None:
@@ -993,8 +994,8 @@ class GeoRaster(object):
         Usage:
         geo.pysal_C(permutations = 1000, rook=True)
 
-        arguments passed to raster_weights() and pysal.G
-        See help(gr.raster_weights), help(pysal.C) for options
+        arguments passed to raster_weights() and pysal.Geary
+        See help(gr.raster_weights), help(pysal.Geary) for options
         """
         if self.weights is None:
             self.raster_weights(**kwargs)
@@ -1002,6 +1003,65 @@ class GeoRaster(object):
         rasterf = rasterf[rasterf.mask==False]
         self.Geary = pysal.Geary(rasterf, self.weights, **kwargs)
     pass
+
+    def pysal_Moran_Local(self, **kwargs):
+        """
+        Compute Local Moran's I measure of local spatial autocorrelation for GeoRaster
+
+        Usage:
+        geo.pysal_Moran_Local(permutations = 1000, rook=True)
+
+        arguments passed to raster_weights() and pysal.Moran_Local
+        See help(gr.raster_weights), help(pysal.Moran_Local) for options
+        """
+        if self.weights is None:
+            self.raster_weights(**kwargs)
+        rasterf = self.raster.flatten()
+        rasterf = rasterf[rasterf.mask==False]
+        self.Moran_Local = pysal.Moran_Local(rasterf, self.weights, **kwargs)
+        for i in self.Moran_Local.__dict__.keys():
+            if (isinstance(getattr(self.Moran_Local, i), np.ma.masked_array) or
+                (isinstance(getattr(self.Moran_Local, i), np.ndarray)) and 
+                 len(getattr(self.Moran_Local, i).shape) == 1):
+                setattr(self.Moran_Local, i, self.map_vector(getattr(self.Moran_Local, i)))
+    pass
+
+    def pysal_G_Local(self, star=False, **kwargs):
+        """
+        Compute Local G or G* measures of local spatial autocorrelation for GeoRaster
+
+        Usage:
+        geo.pysal_Moran(permutations = 1000, rook=True)
+
+        arguments passed to raster_weights() and pysal.G_Local
+        See help(gr.raster_weights), help(pysal.G_Local) for options
+        """
+        if self.weights is None:
+            self.raster_weights(**kwargs)
+        rasterf = self.raster.flatten()
+        rasterf = rasterf[rasterf.mask==False]
+        self.G_Local = pysal.G_Local(rasterf, self.weights, **kwargs)
+        for i in self.G_Local.__dict__.keys():
+            if (isinstance(getattr(self.G_Local, i), np.ma.masked_array) or
+                (isinstance(getattr(self.G_Local, i), np.ndarray)) and 
+                 len(getattr(self.G_Local, i).shape) == 1):
+                setattr(self.G_Local, i, self.map_vector(getattr(self.G_Local, i)))
+    pass
+
+    def map_vector(self, x, **kvars):
+        """
+        Create new GeoRaster, which has its data replaced by x
+        Useful to map output of PySal analyses, e.g. spatial autocorrelation values, etc.
+
+        Usage: raster2 = map_vector(x, raster)
+        where
+            raster: GeoRaster
+            x: Numpy array of data with same length as non-missing values in raster,
+               i.e., len(x) == np.sum(raster.mask==False)
+        """
+        y = self.copy()
+        y.raster[y.raster.mask == False] = x
+        return y
 
     # Setup Graph for distance computations and provide distance functions
     def mcp(self, *args, **kwargs):
