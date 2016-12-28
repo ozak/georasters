@@ -9,3 +9,4 @@ coverage
 fiona
 geopandas
 pysal
+affine
