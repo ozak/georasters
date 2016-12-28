@@ -1,0 +1,26 @@
+# Run `conda-env create -f try_georasters.yml`
+name: try_georasters3
+channels:
+  - conda-forge
+dependencies:
+  - python=3.5
+  - pip
+  - cython
+  - matplotlib
+  - pandas
+  - scipy
+  - fiona
+  - pillow
+  - geopandas
+  - ipython
+  - ipywidgets
+  - jupyter
+  - gdal
+  - libspatialite
+  - affine
+  - proj4
+  - pyproj
+  - numpy>=1.11
+  - pip:
+        - georasters
+        - rasterstats
