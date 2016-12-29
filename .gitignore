@@ -13,3 +13,5 @@
 *.sublime-project
 
 *.sublime-workspace
+
+*.bz2

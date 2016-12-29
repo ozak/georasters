@@ -10,7 +10,8 @@ source:
    # List any patch files here
    # - fix.patch
 
-# build:
+build:
+  osx_is_app: True
   # noarch_python: True
   # preserve_egg_dir: True
   # entry_points:
@@ -29,6 +30,7 @@ source:
 requirements:
   build:
     - python
+    - python.app
     - setuptools
     - numpy
     - gdal
@@ -42,11 +44,14 @@ requirements:
     - pysal
     - geopandas
     - fiona
-    - gdal
     - proj4
+    - dask
+    - pillow
+    - libspatialite
 
   run:
     - python
+    - python.app
     - numpy
     - gdal
     - docopt
@@ -58,17 +63,22 @@ requirements:
     - rasterstats
     - pysal
     - geopandas
+    - proj4
     - fiona
+    - pillow
+    - libspatialite
+    - bokeh
 
 test:
+  files:
+    - test-data.txt
   # Python imports
-  imports:
-    - georasters
+  #imports:
+  #  - georasters
 
-  # commands:
+  #commands:
     # You can put test commands to be run here.  Use this to test that the
     # entry points work.
-
 
   # You can also put a file called run_test.py in the recipe that will be run
   # at test time.
