@@ -1,7 +1,7 @@
 GeoRasters <a href="https://pypi.python.org/pypi/georasters/">![PyPiVersion](https://img.shields.io/pypi/v/georasters.svg)</a> [![Anaconda-Server Badge](https://anaconda.org/ozak/georasters/badges/version.svg)](https://anaconda.org/ozak/georasters)  <a href="">![Pyversions](https://img.shields.io/pypi/pyversions/georasters.svg)</a> <a href="ttps://pypi.python.org/pypi/georasters/">![PyPiDownloads](https://img.shields.io/pypi/dm/georasters.svg)</a> <a href="https://travis-ci.org/ozak/georasters">![BuildStatus](https://api.travis-ci.org/ozak/georasters.png)</a> <a href="https://coveralls.io/r/ozak/georasters">![CoverageStatus](https://img.shields.io/coveralls/ozak/georasters.svg)</a> 
 ==========
 
-The `GeoRasters` package is a python module that provides a fast and flexible tool to work with GIS raster files. It provides the GeoRaster class, which makes working with rasters quite transparent and easy. In a way it tries to do for rasters what GeoPandas does for geometries.
+The `GeoRasters` package is a python module that provides a fast and flexible tool to work with GIS raster files. It provides the GeoRaster class, which makes working with rasters quite transparent and easy. In a way it tries to do for rasters what [GeoPandas](https://github.com/geopandas/geopandas) does for geometries.
 
 It includes tools to
 
@@ -21,8 +21,16 @@ It includes tools to
 Install
 -------
 
+``GeoRasters`` can be installed using ``pip`` or ``conda``.
+
     pip install git+git://github.com/ozak/georasters.git
     pip install georasters
+    conda install -c ozak georasters
+
+You can try it out easily using ``conda env`` and the provided scripts:
+
+ * [try_georasters2.yml](https://github.com/ozak/georasters/blob/master/try_georasters2.yml) creates a GIS functional ``python-2.7`` environment
+ * [try_georasters3.yml](https://github.com/ozak/georasters/blob/master/try_georasters3.yml) creates a GIS functional ``python-3.5`` environment.
 
 Example Usage: GeoRasters
 -------------------------
