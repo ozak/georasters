@@ -10,3 +10,4 @@ fiona
 geopandas
 pysal
 affine
+rasterstats

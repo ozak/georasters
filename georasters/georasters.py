@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # coding: utf-8
 '''
-Copyright (C) 2014 Ömer Özak
-This program defines functions that are useful for working with GIS data
+GeoRasters
+This program defines functions that are useful for working with GIS data in Python
+Copyright (C) 2014-2016 Ömer Özak
+
 Usage:
 
 import georasters as gr
