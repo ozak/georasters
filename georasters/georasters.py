@@ -148,8 +148,8 @@ def align_rasters(raster, alignraster, how=np.ma.mean, cxsize=None, cysize=None,
         how: function used to aggregate cells (if the rasters have different sizes)
     It is assumed that both rasters have the same size
     '''
-    ndv1, xsize1, ysize1, geot1, projection1, datatype1 = GetGeoInfo(raster)
-    ndv2, xsize2, ysize2, geot2, projection2, datatype2 = GetGeoInfo(alignraster)
+    ndv1, xsize1, ysize1, geot1, projection1, datatype1 = get_geo_info(raster)
+    ndv2, xsize2, ysize2, geot2, projection2, datatype2 = get_geo_info(alignraster)
     if projection1.ExportToMICoordSys() == projection2.ExportToMICoordSys():
         blocksize = (np.round(geot2[1]/geot1[1]), np.round(geot2[-1]/geot1[-1]))
         mraster = gdalnumeric.LoadFile(raster)
