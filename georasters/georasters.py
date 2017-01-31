@@ -68,7 +68,7 @@ def map_pixel(point_x, point_y, cellx, celly, xmin, ymax):
             ymax is topmost Y coordinate in system
     Example:
             raster = HMISea.tif'
-            ndv, xsize, ysize, geot, projection, datatype = GetGeoInfo(raster)
+            ndv, xsize, ysize, geot, projection, datatype = get_geo_info(raster)
             row, col = map_pixel(x,y,geot[1],geot[-1], geot[0],geot[3])
     '''
     point_x = np.asarray(point_x)
@@ -85,7 +85,7 @@ def map_pixel_inv(row, col, cellx, celly, xmin, ymax):
             ymax is topmost Y coordinate in system
     Example:
             raster = HMISea.tif'
-            ndv, xsize, ysize, geot, projection, datatype = GetGeoInfo(raster)
+            ndv, xsize, ysize, geot, projection, datatype = get_geo_info(raster)
             row, col = map_pixel(x,y,geot[1],geot[-1], geot[0],geot[3])
     '''
     col = np.asarray(col)
@@ -102,11 +102,11 @@ def aggregate(raster, ndv, block_size):
             aggregate(raster, ndv, block_size)
     where
             raster is a Numpy array created by importing the raster (e.g. geotiff)
-            ndv is the NoData Value for the raster (can be read using the GetGeoInfo function)
+            ndv is the NoData Value for the raster (can be read using the get_geo_info function)
             block_size is a duple of factors by which the raster will be shrinked
     Example:
             raster = HMISea.tif'
-            ndv, xsize, ysize, geot, projection, datatype = GetGeoInfo(raster)
+            ndv, xsize, ysize, geot, projection, datatype = get_geo_info(raster)
             costs = load_tiff(raster)
             costs2=aggregate(costs, ndv, (10,10))
     '''
