@@ -4,7 +4,9 @@ source activate GeoPython2env
 VERSION="0.5.6"
 
 # Build georasters
-conda skeleton pypi georasters
+#conda skeleton pypi georasters
+# Update pypi info in meta.yml
+# then run code
 conda build -c conda-forge -c anaconda -c ozak --python 2.7 --skip-existing georasters
 conda build -c conda-forge -c anaconda -c ozak --python 3.5 --skip-existing georasters
 conda build purge

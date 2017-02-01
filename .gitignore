@@ -15,3 +15,10 @@
 *.sublime-workspace
 
 *.bz2
+
+# Anaconda distribution folder
+anaconda-dist/*
+
+.gitignore
+
+anaconda-dist/build-dist.sh
