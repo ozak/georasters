@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 source activate GeoPython2env
 
-VERSION="0.5.5"
+VERSION="0.5.6"
 
 # Build georasters
 conda skeleton pypi georasters

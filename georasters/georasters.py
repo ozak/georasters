@@ -151,7 +151,7 @@ def align_rasters(raster, alignraster, how=np.ma.mean, cxsize=None, cysize=None,
     ndv1, xsize1, ysize1, geot1, projection1, datatype1 = get_geo_info(raster)
     ndv2, xsize2, ysize2, geot2, projection2, datatype2 = get_geo_info(alignraster)
     if projection1.ExportToMICoordSys() == projection2.ExportToMICoordSys():
-        blocksize = (np.round(geot2[1]/geot1[1]), np.round(geot2[-1]/geot1[-1]))
+        blocksize = (np.round(geot2[1]/geot1[1]).astype(int), np.round(geot2[-1]/geot1[-1]).astype(int))
         mraster = gdalnumeric.LoadFile(raster)
         mraster = np.ma.masked_array(mraster, mask=mraster == ndv1, fill_value=ndv1)
         mmin = mraster.min()
