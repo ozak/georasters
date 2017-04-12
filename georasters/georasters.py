@@ -1247,7 +1247,7 @@ def from_pandas(df, value='value', x='x', y='y', cellx=None, celly=None, xmin=No
         ymax = df[y].max()
     row, col = map_pixel(df[x], df[y], cellx, celly, xmin, ymax)
     dfout = pd.DataFrame(np.array([row, col, df.value]).T, columns=['row', 'col', 'value'])
-    dfout = dfout.set_index(['row', 'col']).unstack().values
+    dfout = dfout = dfout.set_index(["row","col"]).unstack().value.reindex(index=np.arange(0,np.max(row)+1)).T.reindex(index=np.arange(0,np.max(col)+1)).T
     if nodata_value:
         dfout[np.isnan(dfout)] = nodata_value
     if not nodata_value:
