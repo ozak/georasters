@@ -1238,15 +1238,15 @@ def from_pandas(df, value='value', x='x', y='y', cellx=None, celly=None, xmin=No
     the information can be added afterwards directly to the GeoRaster.
     """
     if not cellx:
-        cellx = (df.sort(x)[x]-df.sort(x).shift(1)[x]).max()
+        cellx = (df.sort_values(x)[x]-df.sort_values(x).shift(1)[x]).max()
     if not celly:
-        celly = (df.sort(y, ascending=False)[y]-df.sort(y, ascending=False).shift(1)[y]).min()
+        celly = (df.sort_values(y, ascending=False)[y]-df.sort_values(y, ascending=False).shift(1)[y]).drop_duplicates().replace(0).max()
     if not xmin:
         xmin = df[x].min()
     if not ymax:
         ymax = df[y].max()
     row, col = map_pixel(df[x], df[y], cellx, celly, xmin, ymax)
-    dfout = pd.DataFrame(np.array([row, col, df.value]).T, columns=['row', 'col', 'value'])
+    dfout = pd.DataFrame(np.array([row, col, df[value]]).T, columns=['row', 'col', 'value'])
     dfout = dfout.set_index(['row', 'col']).unstack().values
     if nodata_value:
         dfout[np.isnan(dfout)] = nodata_value
