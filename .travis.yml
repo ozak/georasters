@@ -6,6 +6,7 @@ python:
   - "2.7"
   - "3.4"
   - "3.5"
+  - "3.6"
 before_install:
   - sudo apt-get update
   # - sudo apt-get install libgdal-dev gdal-bin
@@ -28,7 +29,7 @@ before_install:
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
 env:
-  - GDAL_DATA=/usr/share/gdal/1.10/
+  - GDAL_DATA=/usr/share/gdal/2.2/
 install:
   - conda create --yes -n env_name python=$TRAVIS_PYTHON_VERSION pip nose cython numpy matplotlib pandas gdal scipy fiona 
   - source activate env_name

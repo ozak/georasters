@@ -22,3 +22,5 @@ anaconda-dist/*
 .gitignore
 
 anaconda-dist/build-dist.sh
+
+georasters/.coverage
