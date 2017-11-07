@@ -1291,12 +1291,12 @@ def align_georasters(raster, alignraster, how=np.mean, cxsize=None, cysize=None)
                                                              alignraster.projection,
                                                              alignraster.datatype)
     if projection1.ExportToMICoordSys() == projection2.ExportToMICoordSys():
-        blocksize = (np.round(max(geot2[1]/geot1[1], 1)), np.round(max(geot2[-1]/geot1[-1], 1)))
+        blocksize = (np.round(max(geot2[1]/geot1[1], 1)).astype(np.int), np.round(max(geot2[-1]/geot1[-1], 1)).astype(np.int))
         mraster = raster.raster
         mmin = mraster.min()
         if block_reduce != (1, 1):
             mraster = block_reduce(mraster, blocksize, func=how)
-        blocksize = (np.round(max(geot1[1]/geot2[1], 1)), np.round(max(geot1[-1]/geot2[-1], 1)))
+        blocksize = (np.round(max(geot1[1]/geot2[1], 1)).astype(np.int), np.round(max(geot1[-1]/geot2[-1], 1)).astype(np.int))
         araster = alignraster.raster
         amin = araster.min()
         if block_reduce != (1, 1):
