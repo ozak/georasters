@@ -1,10 +1,10 @@
 #!/usr/bin/bash
-source activate GeoPython2env
+#source activate GeoPython2env
 
-VERSION="0.5.6"
+VERSION="0.5.8"
 
 # Build georasters
-#conda skeleton pypi georasters
+# conda skeleton pypi georasters
 # Update pypi info in meta.yml
 # then run code
 conda build -c conda-forge -c anaconda -c ozak --python 2.7 --skip-existing georasters

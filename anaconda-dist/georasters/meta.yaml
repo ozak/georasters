@@ -1,17 +1,18 @@
 package:
   name: georasters
-  version: "0.5.6"
+  version: "0.5.8"
 
 source:
-  fn: georasters-0.5.6.tar.gz
-  url: https://pypi.python.org/packages/10/11/b7ed774362775d7b20ac019e1695f2a3188040a19a2fb9995dbe2267c677/georasters-0.5.6.tar.gz
-  md5: f7aa1abc66628132f709130fd37a1f06
+  git_url: https://github.com/ozak/georasters.git
+#  fn: georasters-0.5.8.tar.gz
+#  url: https://pypi.python.org/packages/fc/c1/8783202a54cd7478d87f784121c726b23a646e1323ef6075d953d529b2c6/georasters-0.5.8.tar.gz
+#  md5: f06e84daa0a6f15097772cb88c2b4c71
 #  patches:
    # List any patch files here
    # - fix.patch
 
 # build:
-  # noarch_python: True
+  # noarch: python
   # preserve_egg_dir: True
   # entry_points:
     # Put any entry points (scripts to be generated automatically) here. The
@@ -40,21 +41,25 @@ requirements:
     - dask
     - libspatialite
     - fiona
+    - rasterstats
+    - geopandas
+    - pysal
+    - affine
 
   run:
     - python
     - numpy
     - gdal
-    - docopt
     - pandas
+    - docopt
+    - gdal
     - pyproj
     - scikit-image
     - matplotlib
-    - dask
-    - libspatialite
+    - coverage
     - fiona
-    - pillow
     - geopandas
+    - pysal
     - affine
     - geopy
     - geos

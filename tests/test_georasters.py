@@ -40,9 +40,9 @@ def test_union():
     raster = os.path.join(DATA, 'pre1500.tif')
     data = gr.from_file(raster)
     (xmin,xsize,x,ymax,y,ysize)=data.geot
-    data1 = gr.GeoRaster(data.raster[:data.shape[0]/2,:], data.geot, 
+    data1 = gr.GeoRaster(data.raster[:int(data.shape[0]/2),:], data.geot, 
                           nodata_value=data.nodata_value, projection=data.projection, datatype=data.datatype)
-    data2 = gr.GeoRaster(data.raster[data.shape[0]/2:,:], (xmin,xsize,x,ymax+ysize*data.shape[0]/2,y,ysize), 
+    data2 = gr.GeoRaster(data.raster[int(data.shape[0]/2):,:], (xmin,xsize,x,ymax+ysize*data.shape[0]/2,y,ysize), 
                           nodata_value=data.nodata_value, projection=data.projection, datatype=data.datatype)
     '''
     import matplotlib.pyplot as plt
