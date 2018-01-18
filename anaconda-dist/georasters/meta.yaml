@@ -33,8 +33,8 @@ requirements:
     - setuptools
     - numpy
     - gdal
-    - docopt
     - pandas
+    - docopt
     - pyproj
     - scikit-image
     - matplotlib
@@ -45,6 +45,18 @@ requirements:
     - geopandas
     - pysal
     - affine
+    - geopy
+    - geos
+    - proj4
+    - pyproj
+    - rasterio
+    - cartopy
+    - click
+    - cligj
+    - certifi
+    - descartes
+    - shapely
+    - rasterstats
 
   run:
     - python
@@ -52,7 +64,6 @@ requirements:
     - gdal
     - pandas
     - docopt
-    - gdal
     - pyproj
     - scikit-image
     - matplotlib
@@ -71,7 +82,6 @@ requirements:
     - cligj
     - certifi
     - descartes
-    - scikit-image
     - shapely
     - rasterstats
 
