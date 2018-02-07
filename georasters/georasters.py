@@ -737,7 +737,7 @@ class GeoRaster(object):
                                                                   nodata_value=x['mini_raster_nodata'],
                                                                   projection=self.projection,
                                                                   datatype=self.datatype))
-        statcols = list(set([i for i in df.properties[0].iterkeys()]).difference(set(shp.columns)))
+        statcols = list(set([i for i in df.properties[0].keys()]).difference(set(shp.columns)))
         cols = shp.columns.tolist()+statcols
         cols = [i for i in cols if i != 'geometry' and i.find('mini_raster') == -1]
         df2 = pd.DataFrame([df.properties.apply(lambda x: x[i]) for i in cols]).T
