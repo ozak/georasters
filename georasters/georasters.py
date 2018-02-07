@@ -45,17 +45,17 @@ from rasterstats import zonal_stats
 import pysal
 
 # Function to read the original file's projection:
-def get_geo_info(filename):
+def get_geo_info(filename, band=1):
     ''' Gets information from a Raster data set
     '''
     sourceds = gdal.Open(filename, GA_ReadOnly)
-    ndv = sourceds.GetRasterBand(1).GetNoDataValue()
+    ndv = sourceds.GetRasterBand(band).GetNoDataValue()
     xsize = sourceds.RasterXSize
     ysize = sourceds.RasterYSize
     geot = sourceds.GetGeoTransform()
     projection = osr.SpatialReference()
     projection.ImportFromWkt(sourceds.GetProjectionRef())
-    datatype = sourceds.GetRasterBand(1).DataType
+    datatype = sourceds.GetRasterBand(band).DataType
     datatype = gdal.GetDataTypeName(datatype)
     return ndv, xsize, ysize, geot, projection, datatype
 
@@ -114,7 +114,7 @@ def aggregate(raster, ndv, block_size):
     return raster2
 
 # Function to write a new file.
-def create_geotiff(name, Array, driver, ndv, xsize, ysize, geot, projection, datatype):
+def create_geotiff(name, Array, driver, ndv, xsize, ysize, geot, projection, datatype, band=1):
     '''
     Creates new geotiff from array
     '''
@@ -130,8 +130,8 @@ def create_geotiff(name, Array, driver, ndv, xsize, ysize, geot, projection, dat
     DataSet.SetGeoTransform(geot)
     DataSet.SetProjection(projection.ExportToWkt())
     # Write the array
-    DataSet.GetRasterBand(1).WriteArray(Array)
-    DataSet.GetRasterBand(1).SetNoDataValue(ndv)
+    DataSet.GetRasterBand(band).WriteArray(Array)
+    DataSet.GetRasterBand(band).SetNoDataValue(ndv)
     return newfilename
 
 # Function to aggregate and align rasters
@@ -712,7 +712,7 @@ class GeoRaster(object):
                                                            datatype=self.datatype), axis=1)
             return df['GeoRaster'].values
 
-    def stats(self, shp, stats=None, add_stats=None, raster_out=True, *args, **kwargs):
+    def stats(self, shp, stats='mean', add_stats=None, raster_out=True, *args, **kwargs):
         '''
         Compute raster statistics for a given geometry in shape, where shape is either
         a GeoPandas DataFrame, shapefile, or some other geometry format used by
@@ -731,7 +731,7 @@ class GeoRaster(object):
         df = pd.DataFrame(zonal_stats(shp, self.raster, nodata=self.nodata_value,
                                       all_touched=True, raster_out=raster_out,
                                       affine=Affine.from_gdal(*self.geot),
-                                      geojson_out=True, stats=None, add_stats=None))
+                                      geojson_out=True, stats=stats, add_stats=add_stats))
         df['GeoRaster'] = df.properties.apply(lambda x: GeoRaster(x['mini_raster_array'],
                                                                   Affine.to_gdal(x['mini_raster_affine']),
                                                                   nodata_value=x['mini_raster_nodata'],
@@ -1214,12 +1214,12 @@ def merge(rasters):
     return union(rasters)
 
 # Load data into a GeoRaster from file
-def from_file(filename):
+def from_file(filename, **kwargs):
     """
     Create a GeoRaster object from a file
     """
-    ndv, xsize, ysize, geot, projection, datatype = get_geo_info(filename)
-    data = gdalnumeric.LoadFile(filename)
+    ndv, xsize, ysize, geot, projection, datatype = get_geo_info(filename, **kwargs)
+    data = gdalnumeric.LoadFile(filename, **kwargs)
     data = np.ma.masked_array(data, mask=data == ndv, fill_value=ndv)
     return GeoRaster(data, geot, nodata_value=ndv, projection=projection, datatype=datatype)
 
