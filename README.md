@@ -32,10 +32,17 @@ You can try it out easily using ``conda env`` and the provided scripts:
  * [try_georasters2.yml](https://github.com/ozak/georasters/blob/master/try_georasters2.yml) creates a GIS functional ``python-2.7`` environment
  * [try_georasters3.yml](https://github.com/ozak/georasters/blob/master/try_georasters3.yml) creates a GIS functional ``python-3.5`` environment.
 
+Requirements
+------------
+You need to install the following software for ``georasters`` to work.
+
+* GDAL
+
 Example Usage: GeoRasters
 -------------------------
 
 	import georasters as gr
+	import numpy as np
 
 	# Load data
 	raster = './data/slope.tif'
@@ -126,6 +133,7 @@ Example Usage: Other functions
 ==============================
 
 	import georasters as gr
+	import numpy as np
 	
 	# Get info on raster
 	NDV, xsize, ysize, GeoT, Projection, DataType = gr.get_geo_info(raster)
