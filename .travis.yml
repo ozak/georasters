@@ -26,13 +26,13 @@ before_install:
   - conda update -q conda
   # Useful for debugging any issues with conda
   - conda info -a
-  - sudo rm -rf /dev/shm
-  - sudo ln -s /run/shm /dev/shm
+  #- sudo rm -rf /dev/shm
+  #- sudo ln -s /run/shm /dev/shm
 env:
   - GDAL_DATA=/usr/share/gdal/2.2/
 install:
-  - conda create -n env_name python=$TRAVIS_PYTHON_VERSION -c conda-forge pip nose cython numpy matplotlib pandas gdal scipy fiona 
-  - source activate env_name
+  - conda create -n test-environment python=$TRAVIS_PYTHON_VERSION -c conda-forge pip nose cython numpy matplotlib pandas gdal scipy fiona 
+  - source activate test-environment
   #- if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then conda install --yes imaging; else pip install pillow; fi
   - pip install pillow
   - pip install pytest pytest-cov # not yet available for py3 in anaconda 
