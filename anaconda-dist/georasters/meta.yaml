@@ -1,6 +1,6 @@
 package:
   name: georasters
-  version: "0.5.8"
+  version: "0.5.9b"
 
 source:
   git_url: https://github.com/ozak/georasters.git
@@ -41,7 +41,7 @@ requirements:
     - dask
     - libspatialite
     - fiona
-    - rasterstats
+    - rasterstats>=0.12
     - geopandas
     - pysal
     - affine
@@ -83,7 +83,7 @@ requirements:
     - certifi
     - descartes
     - shapely
-    - rasterstats
+    - rasterstats>=0.12
 
 test:
   # Python imports
@@ -104,6 +104,31 @@ test:
     - pytest
     - pytest-cov >=2.2.0
     - simplejson
+    - python
+    - numpy
+    - gdal
+    - pandas
+    - docopt
+    - pyproj
+    - scikit-image
+    - matplotlib
+    - coverage
+    - fiona
+    - geopandas
+    - pysal
+    - affine
+    - geopy
+    - geos
+    - proj4
+    - pyproj
+    - rasterio
+    - cartopy
+    - click
+    - cligj
+    - certifi
+    - descartes
+    - shapely
+    - rasterstats>=0.12
     # Put any additional test requirements here.  For example
     # - nose
 

@@ -2,4 +2,4 @@ pytest
 coverage
 git+https://github.com/geopandas/geopandas.git
 git+git://github.com/mverteuil/pytest-ipdb.git
-git+git://github.com/ozak/python-raster-stats.git
+https://github.com/perrygeo/python-rasterstats.git
