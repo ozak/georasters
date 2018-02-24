@@ -31,7 +31,7 @@ before_install:
 env:
   - GDAL_DATA=/usr/share/gdal/2.2/
 install:
-  - conda create -n test-environment python=$TRAVIS_PYTHON_VERSION -c conda-forge pip nose cython numpy matplotlib pandas gdal scipy fiona 
+  - conda create -n test-environment -c conda-forge python=$TRAVIS_PYTHON_VERSION pip nose cython numpy matplotlib pandas gdal scipy fiona 
   - source activate test-environment
   #- if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then conda install --yes imaging; else pip install pillow; fi
   - pip install pillow
