@@ -41,7 +41,7 @@ requirements:
     - dask
     - libspatialite
     - fiona
-    - rasterstats>=0.12
+    - rasterstats >=0.12
     - geopandas
     - pysal
     - affine
@@ -83,7 +83,7 @@ requirements:
     - certifi
     - descartes
     - shapely
-    - rasterstats>=0.12
+    - rasterstats >=0.12
 
 test:
   # Python imports
@@ -128,7 +128,7 @@ test:
     - certifi
     - descartes
     - shapely
-    - rasterstats>=0.12
+    - rasterstats >=0.12
     # Put any additional test requirements here.  For example
     # - nose
 
