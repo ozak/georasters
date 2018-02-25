@@ -25,6 +25,7 @@ Install
 
     pip install git+git://github.com/ozak/georasters.git
     pip install georasters
+    conda install -c conda-forge georasters
     conda install -c ozak georasters
 
 You can try it out easily using ``conda env`` and the provided scripts:
