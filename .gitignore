@@ -24,3 +24,6 @@ anaconda-dist/*
 anaconda-dist/build-dist.sh
 
 georasters/.coverage
+
+.eggs/*
+
