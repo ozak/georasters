@@ -114,7 +114,7 @@ def aggregate(raster, ndv, block_size):
     return raster2
 
 # Function to write a new file.
-def create_geotiff(name, Array, driver, ndv, xsize, ysize, geot, projection, datatype, band=1):
+def create_geotiff(name, Array, driver, ndv, xsize, ysize, geot, projection, datatype, band=1, options=None):
     '''
     Creates new geotiff from array
     '''
@@ -123,15 +123,16 @@ def create_geotiff(name, Array, driver, ndv, xsize, ysize, geot, projection, dat
             datatype = eval('gdal.GDT_'+datatype)
     newfilename = name+'.tif'
     # Set nans to the original No Data Value
-    Array[np.isnan(Array)] = ndv
+    if len(Array[np.isnan(Array)]) > 0:
+        Array[np.isnan(Array)] = ndv
     # Set up the dataset
-    DataSet = driver.Create(newfilename, xsize, ysize, 1, datatype)
+    DataSet = driver.Create(newfilename, xsize, ysize, 1, datatype, options=options)
     # the '1' is for band 1.
     DataSet.SetGeoTransform(geot)
     DataSet.SetProjection(projection.ExportToWkt())
     # Write the array
     DataSet.GetRasterBand(band).WriteArray(Array)
-    DataSet.GetRasterBand(band).SetNoDataValue(ndv)
+    DataSet.GetRasterBand(band).SetNoDataValue(np.float64(ndv))
     return newfilename
 
 # Function to aggregate and align rasters
@@ -455,7 +456,7 @@ class GeoRaster(object):
         return GeoRaster(self.raster.copy(), self.geot, nodata_value=self.nodata_value,
                          projection=self.projection, datatype=self.datatype)
 
-    def to_tiff(self, filename):
+    def to_tiff(self, filename, options=None):
         '''
         geo.to_tiff(filename)
 
@@ -474,9 +475,11 @@ class GeoRaster(object):
                 else:
                     self.raster = self.raster.astype(np.float64)
                     self.datatype = gdal_array.NumericTypeCodeToGDALTypeCode(self.raster.data.dtype)
-        self.raster.data[self.raster.mask] = self.nodata_value
+        
+        if len(self.raster.data[self.raster.mask]) > 0:
+            self.raster.data[self.raster.mask] = self.nodata_value
         create_geotiff(filename, self.raster, gdal.GetDriverByName('GTiff'), self.nodata_value,
-                       self.shape[1], self.shape[0], self.geot, self.projection, self.datatype)
+                       self.shape[1], self.shape[0], self.geot, self.projection, self.datatype, options=options)
 
     def to_pandas(self):
         """
