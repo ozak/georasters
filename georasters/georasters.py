@@ -697,8 +697,8 @@ class GeoRaster(object):
                                                                       nodata_value=x['mini_raster_nodata'],
                                                                       projection=self.projection,
                                                                       datatype=self.datatype))
-            cols = list(set([i for i in df.properties[0].iterkeys()]).intersection(set(shp.columns)))
-            df2 = pd.DataFrame([df.properties.apply(lambda x: x[i]) for i in df.properties[0].iterkeys()
+            cols = list(set([i for i in df.properties[0].keys()]).intersection(set(shp.columns)))
+            df2 = pd.DataFrame([df.properties.apply(lambda x: x[i]) for i in df.properties[0].keys()
                                 if i in cols]).T.merge(df[['GeoRaster']], left_index=True, right_index=True,)
             df2.columns = cols+['GeoRaster']
             df2 = df2.merge(df[['id']], left_index=True, right_index=True)
