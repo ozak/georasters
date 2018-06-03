@@ -859,7 +859,10 @@ class GeoRaster(object):
         Default: func=np.ma.mean
         '''
         raster2 = block_reduce(self.raster, block_size, func=how)
-        return GeoRaster(raster2, self.geot, nodata_value=self.nodata_value,\
+        geot = self.geot
+        geot = (geot[0], block_size[0] * geot[1], geot[2], geot[3], geot[4],
+                block_size[1] * geot[-1])
+        return GeoRaster(raster2, geot, nodata_value=self.nodata_value,\
                         projection=self.projection, datatype=self.datatype)
 
     def resize(self, block_size, order=0, mode='constant', cval=False, preserve_range=True):
