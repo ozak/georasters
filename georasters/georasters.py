@@ -478,30 +478,35 @@ class GeoRaster(object):
         create_geotiff(filename, self.raster, gdal.GetDriverByName('GTiff'), self.nodata_value,
                        self.shape[1], self.shape[0], self.geot, self.projection, self.datatype)
 
-    def to_pandas(self):
+    def to_pandas(self, **kwargs):
         """
         Convert GeoRaster to Pandas DataFrame, which can be easily exported to other types of files
         The DataFrame has the row, col, value, x, and y values for each cell
         """
-        df = to_pandas(self)
+        df = to_pandas(self, **kwargs)
         return df
 
-    def to_geopandas(self):
+    def to_geopandas(self, **kwargs):
         """
         Convert GeoRaster to GeoPandas DataFrame, which can be easily exported to other types
         of files and used to do other types of operations.
         The DataFrame has the geometry (Polygon), row, col, value, x, and y values for each cell
         """
-        df = to_geopandas(self)
+        df = to_geopandas(self, **kwargs)
         return df
 
-    def plot(self, **kwargs):
+    def plot(self, figsize=None, ax=None, **kwargs):
         '''
         geo.plot()
 
         Returns plot of raster data
         '''
-        return plt.matshow(self.raster, **kwargs)
+        if ax is None:
+            fig, ax = plt.subplots(figsize=figsize)
+        ax.set_aspect('equal')
+        ax.matshow(self.raster, **kwargs)
+        plt.draw()
+        return ax
 
     def union(self, other):
         '''
@@ -698,8 +703,8 @@ class GeoRaster(object):
                                                                       projection=self.projection,
                                                                       datatype=self.datatype))
             cols = list(set([i for i in df.properties[0].keys()]).intersection(set(shp.columns)))
-            df2 = pd.DataFrame([df.properties.apply(lambda x: x[i]) for i in df.properties[0].keys()
-                                if i in cols]).T.merge(df[['GeoRaster']], left_index=True, right_index=True,)
+            df2 = pd.DataFrame([df.properties.apply(lambda x: x[i]) for i in cols
+                                ]).T.merge(df[['GeoRaster']], left_index=True, right_index=True,)
             df2.columns = cols+['GeoRaster']
             df2 = df2.merge(df[['id']], left_index=True, right_index=True)
             df2.set_index('id', inplace=True)
@@ -1360,7 +1365,7 @@ def is_geovalid(grasterlist):
 
 # Convert GeoRaster to Pandas DataFrame, which can be easily exported to other types of files
 # Function to
-def to_pandas(raster):
+def to_pandas(raster, name='value'):
     """
     Convert GeoRaster to Pandas DataFrame, which can be easily exported to other types of files
     The DataFrame has the row, col, value, x, and y values for each cell
@@ -1370,7 +1375,7 @@ def to_pandas(raster):
     df = pd.DataFrame(raster.raster)
     df = df.stack()
     df = df.reset_index()
-    df.columns = ['row','col','value']
+    df.columns = ['row', 'col', name]
     df['x'] = df.col.apply(lambda col: raster.geot[0]+(col)*raster.geot[1])
     df['y'] = df.row.apply(lambda row: raster.geot[3]+(row)*raster.geot[-1])
     return df
@@ -1382,7 +1387,7 @@ def squares(row, georaster=None):
                         (row.x,row.y+georaster.y_cell_size)])
     return geometry
 
-def to_geopandas(raster):
+def to_geopandas(raster, **kwargs):
     """
     Convert GeoRaster to GeoPandas DataFrame, which can be easily exported to other types of files
     and used to do other types of operations.
@@ -1390,7 +1395,7 @@ def to_geopandas(raster):
     Usage:
         df = gr.to_geopandas(raster)
     """
-    df = to_pandas(raster)
+    df = to_pandas(raster, **kwargs)
     df['geometry'] = df.apply(squares, georaster=raster, axis=1)
     df = gp.GeoDataFrame(df, crs=from_string(raster.projection.ExportToProj4()))
     return df

@@ -9,5 +9,5 @@ python setup.py sdist bdist_wheel --universal
 twine upload dist/*
 
 # To get sha256
-wget https://pypi.python.org/packages/24/b2/5aa7e9f9e389017396d2e1a45032decd775376b74c4f0391d461389f55a6/georasters-0.5.11.tar.gz#md5=cd6ebfc5d143df753ab42be6d127c4fd
-openssl dgst -sha256 ./georasters-0.5.11.tar.gz
+wget https://files.pythonhosted.org/packages/a0/e9/63d9e6a03d4214a15c3b87f49e80a9d49613015396702677ec1aa013e443/georasters-0.5.12.tar.gz
+openssl dgst -sha256 ./georasters-0.5.12.tar.gz
