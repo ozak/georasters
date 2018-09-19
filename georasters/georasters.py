@@ -73,8 +73,8 @@ def map_pixel(point_x, point_y, cellx, celly, xmin, ymax):
     '''
     point_x = np.asarray(point_x)
     point_y = np.asarray(point_y)
-    col = np.floor((point_x - xmin) / cellx).astype(int)
-    row = np.floor((point_y - ymax) / celly).astype(int)
+    col = np.round((point_x - xmin) / cellx).astype(int)
+    row = np.round((point_y - ymax) / celly).astype(int)
     return row, col
 
 def map_pixel_inv(row, col, cellx, celly, xmin, ymax):
