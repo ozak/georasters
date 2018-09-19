@@ -173,7 +173,7 @@ Example Usage: Other functions
     NDV, xsize, ysize, GeoT, Projection, DataType = gr.get_geo_info(raster)
     
     # Load raster
-    data = load_tiff(raster)
+    data = gr.load_tiff(raster)
        
     # Find location of point (x,y) on raster, e.g. to extract info at that location
     col, row = gr.map_pixel(x,y,GeoT[1],GeoT[-1], GeoT[0],GeoT[3])
@@ -183,7 +183,7 @@ Example Usage: Other functions
     gr.aggregate(data,NDV,(10,10))
     
     # Align two rasters
-    data2 = load_tiff(raster2)
+    data2 = gr.load_tiff(raster2)
     (alignedraster_o, alignedraster_a, GeoT_a) = gr.align_rasters(raster, raster2, how=np.mean)
     
     # Create GeoRaster
@@ -191,7 +191,7 @@ Example Usage: Other functions
 
     # Load another raster
     NDV, xsize, ysize, GeoT, Projection, DataType = gr.get_geo_info(raster2)
-    data = load_tiff(raster2)
+    data = gr.load_tiff(raster2)
     B=gr.GeoRaster(data2, GeoT, nodata_value=NDV)
     
     # Plot Raster
