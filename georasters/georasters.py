@@ -62,13 +62,19 @@ def get_geo_info(filename, band=1):
 # Function to map location in pixel of raster array
 def map_pixel(point_x, point_y, cellx, celly, xmin, ymax):
     '''
-    Usage: map_pixel(xcoord, ycoord, x_cell_size, y_cell_size, xmin, ymax)
+    Usage:
+        map_pixel(xcoord, ycoord, x_cell_size, y_cell_size, xmin, ymax)
+
     where:
-            xmin is leftmost X coordinate in system
-            ymax is topmost Y coordinate in system
+        xmin is leftmost X coordinate in system
+
+        ymax is topmost Y coordinate in system
+
     Example:
-            raster = HMISea.tif'
+            raster = HMISea.tif
+
             ndv, xsize, ysize, geot, projection, datatype = get_geo_info(raster)
+
             row, col = map_pixel(x,y,geot[1],geot[-1], geot[0],geot[3])
     '''
     point_x = np.asarray(point_x)
@@ -79,13 +85,20 @@ def map_pixel(point_x, point_y, cellx, celly, xmin, ymax):
 
 def map_pixel_inv(row, col, cellx, celly, xmin, ymax):
     '''
-    Usage: map_pixel(xcoord, ycoord, x_cell_size, y_cell_size, xmin, ymax)
+    Usage:
+        map_pixel(xcoord, ycoord, x_cell_size, y_cell_size, xmin, ymax)
+
+
     where:
             xmin is leftmost X coordinate in system
+
             ymax is topmost Y coordinate in system
+
     Example:
-            raster = HMISea.tif'
+            raster = HMISea.tif
+
             ndv, xsize, ysize, geot, projection, datatype = get_geo_info(raster)
+
             row, col = map_pixel(x,y,geot[1],geot[-1], geot[0],geot[3])
     '''
     col = np.asarray(col)
@@ -100,14 +113,21 @@ def aggregate(raster, ndv, block_size):
     Aggregate raster to smaller resolution, by adding cells.
     Usage:
             aggregate(raster, ndv, block_size)
-    where
+
+    where:
             raster is a Numpy array created by importing the raster (e.g. geotiff)
+
             ndv is the NoData Value for the raster (can be read using the get_geo_info function)
+
             block_size is a duple of factors by which the raster will be shrinked
+
     Example:
-            raster = HMISea.tif'
+            raster = HMISea.tif
+
             ndv, xsize, ysize, geot, projection, datatype = get_geo_info(raster)
+
             costs = load_tiff(raster)
+
             costs2=aggregate(costs, ndv, (10,10))
     '''
     raster2 = block_reduce(raster, block_size, func=np.ma.sum)
@@ -139,13 +159,15 @@ def align_rasters(raster, alignraster, how=np.ma.mean, cxsize=None, cysize=None,
     '''
     Align two rasters so that data overlaps by geographical location
     Usage:
-
     (alignedraster_o, alignedraster_a, geot_a) = AlignRasters(raster, alignraster, how=np.mean)
 
-    where
+    where:
         raster: string with location of raster to be aligned
+
         alignraster: string with location of raster to which raster will be aligned
+
         how: function used to aggregate cells (if the rasters have different sizes)
+
     It is assumed that both rasters have the same size
     '''
     ndv1, xsize1, ysize1, geot1, projection1, datatype1 = get_geo_info(raster)
@@ -209,8 +231,9 @@ def align_rasters(raster, alignraster, how=np.ma.mean, cxsize=None, cysize=None,
 def load_tiff(file):
     """
     Load a geotiff raster keeping ndv values using a masked array
+
     Usage:
-            data = LoadTiffRaster(file)
+            data = load_tiff(file)
     """
     ndv, xsize, ysize, geot, projection, datatype = get_geo_info(file)
     data = gdalnumeric.LoadFile(file)
@@ -230,8 +253,9 @@ class RasterGeoTWarning(Exception):
 # GeoRaster Class
 class GeoRaster(object):
     '''
-    GeoRaster class to create and handle GIS rasters
+    GeoRaster class to create and handle GIS rasters.
     Eash GeoRaster object is a numpy masked array + geotransfrom + nodata_value
+
     Usage:
         geo=GeoRaster(raster, geot, nodata_value=ndv)
     where
@@ -1174,9 +1198,10 @@ class GeoRaster(object):
 def union(rasters):
     """
     Union of rasters
+
     Usage:
         union(rasters)
-    where
+    where:
         rasters is a list of GeoRaster objects
     """
     if sum([rasters[0].x_cell_size == i.x_cell_size for i in rasters]) == len(rasters) \
