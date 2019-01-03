@@ -5,7 +5,7 @@ dependencies:
 - python=3.5
 - pandas
 - geopandas
-- gdal2
+- gdal
 - shapely
 - fiona
 - pyproj
