@@ -1,4 +1,4 @@
-GeoRasters <a href="https://pypi.python.org/pypi/georasters/">![PyPiVersion](https://img.shields.io/pypi/v/georasters.svg)</a> [![Anaconda-Server Badge](https://anaconda.org/conda-forge/georasters/badges/version.svg)](https://anaconda.org/conda-forge/georasters)  <a href="">![Pyversions](https://img.shields.io/pypi/pyversions/georasters.svg)</a> <a href="https://travis-ci.org/ozak/georasters">![BuildStatus](https://api.travis-ci.org/ozak/georasters.png)</a> <a href="https://coveralls.io/r/ozak/georasters">![CoverageStatus](https://img.shields.io/coveralls/ozak/georasters.svg)</a> 
+GeoRasters <a href="https://pypi.python.org/pypi/georasters/">![PyPiVersion](https://img.shields.io/pypi/v/georasters.svg)</a> [![Anaconda-Server Badge](https://anaconda.org/conda-forge/georasters/badges/version.svg)](https://anaconda.org/conda-forge/georasters)  <a href="">![Pyversions](https://img.shields.io/pypi/pyversions/georasters.svg)</a> <a href="https://georasters.readthedocs.io/en/latest/">![ReadTheDocs](https://readthedocs.org/projects/georasters/badge/?version=latest&style=plastic)</a> <a href="https://travis-ci.org/ozak/georasters">![BuildStatus](https://api.travis-ci.org/ozak/georasters.png)</a> <a href="https://coveralls.io/r/ozak/georasters">![CoverageStatus](https://img.shields.io/coveralls/ozak/georasters.svg)</a> 
 ==========
 
 The `GeoRasters` package is a python module that provides a fast and flexible tool to work with GIS raster files. It provides the GeoRaster class, which makes working with rasters quite transparent and easy. In a way it tries to do for rasters what [GeoPandas](https://github.com/geopandas/geopandas) does for geometries.
@@ -68,8 +68,8 @@ Example Usage: GeoRasters
 	data3 = np.sin(data.raster) / data2
 	data3.plot()
 
-	# Notice that by using the data.raster object, 
-	# you can do any mathematical operation that handles 
+	# Notice that by using the data.raster object,
+	# you can do any mathematical operation that handles
 	# Numpy Masked Arrays
 
 	# Find value at point (x,y) or at vectors (X,Y)
@@ -101,7 +101,7 @@ Example Merge GeoRasters:
 						 nodata_value=data.nodata_value,
 						 projection=data.projection,
 						 datatype=data.datatype,)
-	
+
 	# Plot both parts and save them
 	plt.figure(figsize=(12, 8))
 	data1.plot()
@@ -135,35 +135,35 @@ Example Usage: Other functions
 
 	import georasters as gr
 	import numpy as np
-	
+
 	# Get info on raster
 	NDV, xsize, ysize, GeoT, Projection, DataType = gr.get_geo_info(raster)
-	
+
 	# Load raster
 	data = load_tiff(raster)
-	
+
 	# Find location of point (x,y) on raster, e.g. to extract info at that location
 	col, row = gr.map_pixel(x,y,GeoT[1],GeoT[-1], GeoT[0],GeoT[3])
 	value = data[row,col]
-	
+
 	# Agregate raster by summing over cells in order to increase pixel size by e.g. 10
 	gr.aggregate(data,NDV,(10,10))
-	
+
 	# Align two rasters
 	data2 = load_tiff(raster2)
 	(alignedraster_o, alignedraster_a, GeoT_a) = gr.align_rasters(raster, raster2, how=np.mean)
-	
+
 	# Create GeoRaster
 	A=gr.GeoRaster(data, GeoT, nodata_value=NDV)
-	
+
 	# Load another raster
 	NDV, xsize, ysize, GeoT, Projection, DataType = gr.get_geo_info(raster2)
 	data = load_tiff(raster2)
 	B=gr.GeoRaster(data2, GeoT, nodata_value=NDV)
-	
+
 	# Plot Raster
 	A.plot()
-	
+
 	# Merge both rasters and plot
 	C=B.merge(A)
 	C.plot()
