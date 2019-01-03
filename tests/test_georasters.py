@@ -1,4 +1,4 @@
-# test zonal stats
+# Test GeoRasters
 from __future__ import division
 import os, sys
 import pytest
@@ -40,37 +40,37 @@ def test_union():
     raster = os.path.join(DATA, 'pre1500.tif')
     data = gr.from_file(raster)
     (xmin,xsize,x,ymax,y,ysize)=data.geot
-    data1 = gr.GeoRaster(data.raster[:int(data.shape[0]/2),:], data.geot, 
+    data1 = gr.GeoRaster(data.raster[:int(data.shape[0]/2),:], data.geot,
                           nodata_value=data.nodata_value, projection=data.projection, datatype=data.datatype)
-    data2 = gr.GeoRaster(data.raster[int(data.shape[0]/2):,:], (xmin,xsize,x,ymax+ysize*data.shape[0]/2,y,ysize), 
+    data2 = gr.GeoRaster(data.raster[int(data.shape[0]/2):,:], (xmin,xsize,x,ymax+ysize*data.shape[0]/2,y,ysize),
                           nodata_value=data.nodata_value, projection=data.projection, datatype=data.datatype)
     '''
     import matplotlib.pyplot as plt
     plt.figure()
     data1.plot()
     plt.savefig(os.path.join(DATA,'data1.png'))
-    
+
     plt.figure()
     data2.plot()
     plt.savefig(os.path.join(DATA,'data2.png'))
-    
+
     from rasterstats import zonal_stats
     import geopandas as gp
     import pandas as pd
-    
+
     # Import shapefiles
     pathshp = os.path.join(DATA, 'COL.shp')
     dfcol=gp.GeoDataFrame.from_file(pathshp)
     pathshp = os.path.join(DATA, 'TUR.shp')
     dftur=gp.GeoDataFrame.from_file(pathshp)
-    
+
     # Joint geopandas df
     df=dfcol.append(dftur)
     df.reset_index(drop=True,inplace=True)
-    
+
     stats = zonal_stats(df, raster, copy_properties=True, all_touched=True, raster_out=True, opt_georaster=True)
-    dfcol=pd.merge(dfcol,pd.DataFrame(data=stats), 
-    
+    dfcol=pd.merge(dfcol,pd.DataFrame(data=stats),
+
     '''
     assert (data1.union(data2).raster==data.raster).sum()==data.count()
 

@@ -73,8 +73,8 @@ def map_pixel(point_x, point_y, cellx, celly, xmin, ymax):
     '''
     point_x = np.asarray(point_x)
     point_y = np.asarray(point_y)
-    col = np.round((point_x - xmin) / cellx).astype(int)
-    row = np.round((point_y - ymax) / celly).astype(int)
+    col = np.floor((point_x - xmin) / cellx).astype(int)
+    row = np.floor((point_y - ymax) / celly).astype(int)
     return row, col
 
 def map_pixel_inv(row, col, cellx, celly, xmin, ymax):
@@ -240,7 +240,7 @@ class GeoRaster(object):
         geot: GDAL Geotransformation
         nodata_value: No data value in raster, optional
     '''
-    def __init__(self, raster, geot, nodata_value=np.nan, projection=None, datatype=None):
+    def __init__(self, raster, geot, nodata_value=np.nan, fill_value=-1e10, projection=None, datatype=None):
         '''
         Initialize Georaster
         Usage:
@@ -256,7 +256,7 @@ class GeoRaster(object):
             self.raster = raster
         else:
             self.raster = np.ma.masked_array(raster, mask=raster == nodata_value,
-                                             fill_value=nodata_value)
+                                             fill_value=fill_value)
         self.geot = geot
         self.nodata_value = nodata_value
         self.shape = raster.shape
@@ -1031,7 +1031,7 @@ class GeoRaster(object):
         self.Moran_Local = pysal.Moran_Local(rasterf, self.weights, **kwargs)
         for i in self.Moran_Local.__dict__.keys():
             if (isinstance(getattr(self.Moran_Local, i), np.ma.masked_array) or
-                (isinstance(getattr(self.Moran_Local, i), np.ndarray)) and 
+                (isinstance(getattr(self.Moran_Local, i), np.ndarray)) and
                  len(getattr(self.Moran_Local, i).shape) == 1):
                 setattr(self.Moran_Local, i, self.map_vector(getattr(self.Moran_Local, i)))
     pass
@@ -1053,7 +1053,7 @@ class GeoRaster(object):
         self.G_Local = pysal.G_Local(rasterf, self.weights, **kwargs)
         for i in self.G_Local.__dict__.keys():
             if (isinstance(getattr(self.G_Local, i), np.ma.masked_array) or
-                (isinstance(getattr(self.G_Local, i), np.ndarray)) and 
+                (isinstance(getattr(self.G_Local, i), np.ndarray)) and
                  len(getattr(self.G_Local, i).shape) == 1):
                 setattr(self.G_Local, i, self.map_vector(getattr(self.G_Local, i)))
     pass
@@ -1197,15 +1197,15 @@ def union(rasters):
         lonmax = max([i.xmax for i in rasters])
         latmin = min([i.ymin for i in rasters])
         latmax = max([i.ymax for i in rasters])
-        shape = (np.abs(np.round((latmax-latmin)/rasters[0].y_cell_size)).astype(int), np.round((lonmax-lonmin)/rasters[0].x_cell_size).astype(int))
+        shape = (np.abs(np.floor((latmax-latmin)/rasters[0].y_cell_size)).astype(int), np.floor((lonmax-lonmin)/rasters[0].x_cell_size).astype(int))
         out = ndv*np.ones(shape)
         outmask = np.ones(shape).astype(bool)
         for i in rasters:
             (row, col) = map_pixel(i.xmin, i.ymax, rasters[0].x_cell_size, rasters[0].y_cell_size, lonmin, latmax)
             out[row:row+i.shape[0], col:col+i.shape[1]] = np.where(i.raster.data != i.nodata_value, i.raster.data,\
-                                                         out[row:row+i.shape[0], col:col+i.shape[1]])#i.raster
+                                                         out[row:row+i.shape[0], col:col+i.shape[1]])
             outmask[row:row+i.shape[0], col:col+i.shape[1]] = np.where(i.raster.mask == False, False,\
-                                                         outmask[row:row+i.shape[0], col:col+i.shape[1]])#i.raster
+                                                         outmask[row:row+i.shape[0], col:col+i.shape[1]])
         out = np.ma.masked_array(out, mask=outmask, fill_value=ndv)
         return GeoRaster(out, (lonmin, rasters[0].x_cell_size, 0.0, latmax, 0.0, rasters[0].y_cell_size), nodata_value=ndv, projection=projection, datatype=datatype)
     else:
