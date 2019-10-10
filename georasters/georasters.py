@@ -274,6 +274,7 @@ class GeoRaster(object):
                     which could be loaded with from_file(file) or load_tiff(file)
             geot: GDAL Geotransformation
             nodata_value: No data value in raster, optional
+            projection: osr SpatialReference
         '''
         super(GeoRaster, self).__init__()
         if isinstance(raster, np.ma.core.MaskedArray):
@@ -1204,37 +1205,52 @@ def union(rasters):
     where:
         rasters is a list of GeoRaster objects
     """
-    if sum([rasters[0].x_cell_size == i.x_cell_size for i in rasters]) == len(rasters) \
-       and sum([rasters[0].y_cell_size == i.y_cell_size for i in rasters]) == len(rasters)\
-       and sum([rasters[0].projection.ExportToProj4() == i.projection.ExportToProj4() for i in rasters]) == len(rasters):
-        if sum([rasters[0].nodata_value == i.nodata_value for i in rasters]) == len(rasters):
-            ndv = rasters[0].nodata_value
-        else:
-            ndv = np.nan
-        if ndv == None:
-            ndv = np.nan
-        if sum([rasters[0].datatype == i.datatype for i in rasters]) == len(rasters):
-            datatype = rasters[0].datatype
-        else:
-            datatype = None
-        projection = rasters[0].projection
-        lonmin = min([i.xmin for i in rasters])
-        lonmax = max([i.xmax for i in rasters])
-        latmin = min([i.ymin for i in rasters])
-        latmax = max([i.ymax for i in rasters])
-        shape = (np.abs(np.floor((latmax-latmin)/rasters[0].y_cell_size)).astype(int), np.floor((lonmax-lonmin)/rasters[0].x_cell_size).astype(int))
-        out = ndv*np.ones(shape)
-        outmask = np.ones(shape).astype(bool)
-        for i in rasters:
-            (row, col) = map_pixel(i.xmin, i.ymax, rasters[0].x_cell_size, rasters[0].y_cell_size, lonmin, latmax)
-            out[row:row+i.shape[0], col:col+i.shape[1]] = np.where(i.raster.data != i.nodata_value, i.raster.data,\
-                                                         out[row:row+i.shape[0], col:col+i.shape[1]])
-            outmask[row:row+i.shape[0], col:col+i.shape[1]] = np.where(i.raster.mask == False, False,\
-                                                         outmask[row:row+i.shape[0], col:col+i.shape[1]])
-        out = np.ma.masked_array(out, mask=outmask, fill_value=ndv)
-        return GeoRaster(out, (lonmin, rasters[0].x_cell_size, 0.0, latmax, 0.0, rasters[0].y_cell_size), nodata_value=ndv, projection=projection, datatype=datatype)
-    else:
+
+    # check if the union will be valid
+    if not rasters:
+        raise ValueError("More than zero rasters needed to union")
+    first = rasters[0]
+
+    if sum([first.x_cell_size == i.x_cell_size for i in rasters]) != len(rasters) \
+            and sum([first.y_cell_size == i.y_cell_size for i in rasters]) != len(rasters):
         raise RasterGeoError('Rasters need to have same pixel sizes. Use the aggregate or dissolve functions to generate correct GeoRasters')
+    if sum([first.projection.ExportToProj4() == i.projection.ExportToProj4() for i in rasters]) != len(rasters):
+        raise RasterGeoError('Rasters must share the same projection')
+
+    # get parameters for union
+
+    datatype = None  # this is the gdal datatype
+    if sum([first.datatype == i.datatype for i in rasters]) == len(rasters):
+        datatype = first.datatype
+
+    dtype = np.find_common_type([i.raster.dtype for i in rasters], [])  # get the greatest common datatype
+
+    # get the null data value
+    ndv = None
+    if sum([first.nodata_value == i.nodata_value for i in rasters]) == len(rasters):
+        ndv = first.nodata_value
+    if ndv is None:
+        ndv = np.ma.core.default_fill_value(dtype)
+
+    projection = first.projection
+    lonmin = min([i.xmin for i in rasters])
+    lonmax = max([i.xmax for i in rasters])
+    latmin = min([i.ymin for i in rasters])
+    latmax = max([i.ymax for i in rasters])
+    shape = (np.abs(np.floor((latmax-latmin)/first.y_cell_size)).astype(int), np.floor((lonmax-lonmin)/first.x_cell_size).astype(int))
+
+    # do the union
+    out = np.full(shape, ndv, dtype=dtype)
+    outmask = np.ones(shape, dtype=bool)
+    for i in rasters:
+        (row, col) = map_pixel(i.xmin, i.ymax, first.x_cell_size, first.y_cell_size, lonmin, latmax)
+        out[row:row+i.shape[0], col:col+i.shape[1]] = np.where(i.raster.data != i.nodata_value, i.raster.data,
+                                                     out[row:row+i.shape[0], col:col+i.shape[1]])
+        outmask[row:row+i.shape[0], col:col+i.shape[1]] = np.where(i.raster.mask == False, False,
+                                                     outmask[row:row+i.shape[0], col:col+i.shape[1]])
+    out = np.ma.masked_array(out, mask=outmask, fill_value=ndv)
+    return GeoRaster(out, (lonmin, first.x_cell_size, 0.0, latmax, 0.0, first.y_cell_size), nodata_value=ndv, projection=projection, datatype=datatype)
+
 
 def merge(rasters):
     """

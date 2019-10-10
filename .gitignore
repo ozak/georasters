@@ -1,0 +1,10 @@
+# pyenv stuff
+.python-version
+
+# install from source
+georasters.egg-info/
+**/__pycache__/
+
+# general python
+*.pyc
+
