@@ -6,6 +6,7 @@ python:
   - "2.7"
   - "3.5"
   - "3.6"
+  - "3.7"
 before_install:
   - sudo apt-get update
   # - sudo apt-get install libgdal-dev gdal-bin
@@ -31,17 +32,17 @@ before_install:
 env:
   - GDAL_DATA=/usr/share/gdal/2.2/
 install:
-  - conda create -n test-environment -c conda-forge python=$TRAVIS_PYTHON_VERSION pip nose cython numpy matplotlib pandas gdal scipy fiona 
+  - conda create -n test-environment -c conda-forge python=$TRAVIS_PYTHON_VERSION pip nose cython numpy matplotlib pandas gdal scipy fiona proj geopandas rtree
   - source activate test-environment
   #- if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then conda install --yes imaging; else pip install pillow; fi
   - pip install pillow
-  - pip install pytest pytest-cov # not yet available for py3 in anaconda 
+  - pip install pytest pytest-cov # not yet available for py3 in anaconda
   - pip install python-coveralls
-  - pip install networkx --upgrade 
+  - pip install networkx --upgrade
   - "pip install -r requirements.txt"
   - "pip install -r requirements_dev.txt"
   - python setup.py install
-script: 
+script:
   - py.test --cov georasters --cov-report term-missing
   #- coverage run --source=georasters setup.py test
 after_success:
