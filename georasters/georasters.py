@@ -43,6 +43,26 @@ from shapely.geometry import Polygon, LineString
 from affine import Affine
 from rasterstats import zonal_stats
 import pysal
+if pysal.__version__.startswith('2'):
+    from pysal.explore.esda import G as pysal_G
+    from pysal.explore.esda import G_Local as pysal_G_Local
+    from pysal.explore.esda import Gamma as pysal_Gamma
+    from pysal.explore.esda import Join_Counts as pysal_Join_Counts
+    from pysal.explore.esda import Moran as pysal_Moran
+    from pysal.explore.esda import Moran_Local as pysal_Moran_Local
+    from pysal.explore.esda import Geary as pysal_Geary
+    from pysal.lib.weights import lat2W as pysal_lat2W
+    from pysal.lib.weights import W as pysal_W
+else:
+    from pysal import G as pysal_G
+    from pysal import G_Local as pysal_G_Local
+    from pysal import Gamma as pysal_Gamma
+    from pysal import Join_Counts as pysal_Join_Counts
+    from pysal import Moran as pysal_Moran
+    from pysal import Moran_Local as pysal_Moran_Local
+    from pysal import Geary as pysal_Geary
+    from pysal import lat2W as pydal_lat2W
+    from pysal import W as pysal_W
 
 # Function to read the original file's projection:
 def get_geo_info(filename, band=1):
@@ -960,14 +980,14 @@ class GeoRaster(object):
         Usage:
         geo.pysal_G(permutations = 1000, rook=True)
 
-        arguments passed to raster_weights() and pysal.G
-        See help(gr.raster_weights), help(pysal.G) for options
+        arguments passed to raster_weights() and pysal_G
+        See help(gr.raster_weights), help(pysal_G) for options
         """
         if self.weights is None:
             self.raster_weights(**kwargs)
         rasterf = self.raster.flatten()
         rasterf = rasterf[rasterf.mask==False]
-        self.G = pysal.G(rasterf, self.weights, **kwargs)
+        self.G = pysal_G(rasterf, self.weights, **kwargs)
     pass
 
     def pysal_Gamma(self, **kwargs):
@@ -984,7 +1004,7 @@ class GeoRaster(object):
             self.raster_weights(**kwargs)
         rasterf = self.raster.flatten()
         rasterf = rasterf[rasterf.mask==False]
-        self.Gamma = pysal.Gamma(rasterf, self.weights, **kwargs)
+        self.Gamma = pysal_Gamma(rasterf, self.weights, **kwargs)
     pass
 
     def pysal_Join_Counts(self, **kwargs):
@@ -1001,7 +1021,7 @@ class GeoRaster(object):
             self.raster_weights(**kwargs)
         rasterf = self.raster.flatten()
         rasterf = rasterf[rasterf.mask==False]
-        self.Join_Counts = pysal.Join_Counts(rasterf, self.weights, **kwargs)
+        self.Join_Counts = pysal_Join_Counts(rasterf, self.weights, **kwargs)
     pass
 
     def pysal_Moran(self, **kwargs):
@@ -1018,7 +1038,7 @@ class GeoRaster(object):
             self.raster_weights(**kwargs)
         rasterf = self.raster.flatten()
         rasterf = rasterf[rasterf.mask==False]
-        self.Moran = pysal.Moran(rasterf, self.weights, **kwargs)
+        self.Moran = pysal_Moran(rasterf, self.weights, **kwargs)
     pass
 
     def pysal_Geary(self, **kwargs):
@@ -1035,7 +1055,7 @@ class GeoRaster(object):
             self.raster_weights(**kwargs)
         rasterf = self.raster.flatten()
         rasterf = rasterf[rasterf.mask==False]
-        self.Geary = pysal.Geary(rasterf, self.weights, **kwargs)
+        self.Geary = pysal_Geary(rasterf, self.weights, **kwargs)
     pass
 
     def pysal_Moran_Local(self, **kwargs):
@@ -1052,7 +1072,7 @@ class GeoRaster(object):
             self.raster_weights(**kwargs)
         rasterf = self.raster.flatten()
         rasterf = rasterf[rasterf.mask==False]
-        self.Moran_Local = pysal.Moran_Local(rasterf, self.weights, **kwargs)
+        self.Moran_Local = pysal_Moran_Local(rasterf, self.weights, **kwargs)
         for i in self.Moran_Local.__dict__.keys():
             if (isinstance(getattr(self.Moran_Local, i), np.ma.masked_array) or
                 (isinstance(getattr(self.Moran_Local, i), np.ndarray)) and
@@ -1074,7 +1094,7 @@ class GeoRaster(object):
             self.raster_weights(**kwargs)
         rasterf = self.raster.flatten()
         rasterf = rasterf[rasterf.mask==False]
-        self.G_Local = pysal.G_Local(rasterf, self.weights, **kwargs)
+        self.G_Local = pysal_G_Local(rasterf, self.weights, **kwargs)
         for i in self.G_Local.__dict__.keys():
             if (isinstance(getattr(self.G_Local, i), np.ma.masked_array) or
                 (isinstance(getattr(self.G_Local, i), np.ndarray)) and
@@ -1444,7 +1464,7 @@ def raster_weights(raster, rook=False, transform='r', **kwargs):
         shape = (np.sqrt(raster.shape[0]) * np.array([1,1])).astype(int)
     else:
         shape = raster.shape
-    w = pysal.lat2W(*shape, rook=rook, **kwargs)
+    w = pysal_lat2W(*shape, rook=rook, **kwargs)
 
     # Identify missing/no data
     if isinstance(rasterf, np.ma.core.MaskedArray):
@@ -1458,7 +1478,7 @@ def raster_weights(raster, rook=False, transform='r', **kwargs):
         if key not in missn:
             value = list(set(value).difference(missn))
             cneighbors[key] = value
-    w = pysal.W(cneighbors)
+    w = pysal_W(cneighbors)
     w.transform = transform
     return w
 
