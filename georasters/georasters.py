@@ -303,14 +303,6 @@ class GeoRaster(object):
                                              fill_value=fill_value)
         self.geot = geot
         self.nodata_value = nodata_value
-        self.shape = raster.shape
-        self.x_cell_size = geot[1]
-        self.y_cell_size = geot[-1]
-        self.xmin = geot[0]
-        self.ymax = geot[3]
-        self.xmax = self.xmin + self.x_cell_size * self.shape[1]
-        self.ymin = self.ymax + self.y_cell_size * self.shape[0]
-        self.bounds = (self.xmin, self.ymin, self.xmax, self.ymax)
         self.projection = projection
         self.datatype = datatype
         self.mcp_cost = None
@@ -321,6 +313,38 @@ class GeoRaster(object):
         self.Moran = None
         self.Geary = None
         self.Moran_Local = None
+
+    @property
+    def shape(self):
+        return self.raster.shape
+
+    @property
+    def x_cell_size(self):
+        return self.geot[1]
+
+    @property
+    def y_cell_size(self):
+        return self.geot[-1]
+
+    @property
+    def xmin(self):
+        return self.geot[0]
+
+    @property
+    def xmax(self):
+        return self.xmin + self.x_cell_size * self.shape[1]
+
+    @property
+    def ymin(self):
+        return self.ymax + self.y_cell_size * self.shape[0]
+
+    @property
+    def ymax(self):
+        return self.geot[3]
+
+    @property
+    def bounds(self):
+        return (self.xmin, self.ymin, self.xmax, self.ymax)
 
     def __getitem__(self, indx):
         rast = self.raster.__getitem__(indx)
