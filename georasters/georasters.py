@@ -885,7 +885,7 @@ class GeoRaster(object):
         col2 = np.abs(radius/self.x_cell_size).astype(int)
         row2 = np.abs(radius/self.y_cell_size).astype(int)
         return GeoRaster(self.raster[max(row-row2, 0):min(row+row2+1, self.shape[0]), \
-                        max(col-col2, 0):min(col+col2+1, self.shape[1])], self.geot,
+                        max(col-col2, 0):min(col+col2+1, self.shape[1]), ...], self.geot,
                         nodata_value=self.nodata_value,\
                         projection=self.projection, datatype=self.datatype)
 
