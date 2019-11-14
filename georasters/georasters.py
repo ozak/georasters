@@ -247,19 +247,6 @@ def align_rasters(raster, alignraster, how=np.ma.mean, cxsize=None, cysize=None,
         print("Rasters need to be in same projection")
         return (-1, -1, -1)
 
-# Load geotif raster data
-def load_tiff(file):
-    """
-    Load a geotiff raster keeping ndv values using a masked array
-
-    Usage:
-            data = load_tiff(file)
-    """
-    ndv, xsize, ysize, geot, projection, datatype = get_geo_info(file)
-    data = gdalnumeric.LoadFile(file)
-    data = np.ma.masked_array(data, mask=data == ndv, fill_value=ndv)
-    return data
-
 class RasterGeoTError(Exception):
     pass
 
