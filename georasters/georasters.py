@@ -1285,6 +1285,9 @@ def from_file(filename, **kwargs):
     ndv, xsize, ysize, geot, projection, datatype = get_geo_info(filename, **kwargs)
     data = gdalnumeric.LoadFile(filename, **kwargs)
     data = np.ma.masked_array(data, mask=data == ndv, fill_value=ndv)
+    if data.ndim == 3:
+        # move the raster-band axis to the end
+        data = np.moveaxis(data, 0, -1)
     return GeoRaster(data, geot, nodata_value=ndv, projection=projection, datatype=datatype)
 
 # Convert Pandas DataFrame to raster
