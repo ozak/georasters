@@ -333,6 +333,10 @@ class GeoRaster(object):
     def bounds(self):
         return (self.xmin, self.ymin, self.xmax, self.ymax)
 
+    @property
+    def extent(self):
+        return (self.xmin, self.xmax, self.ymin, self.ymax)
+
     def __getitem__(self, indx):
         rast = self.raster.__getitem__(indx)
         proj = self.projection
@@ -556,6 +560,8 @@ class GeoRaster(object):
 
         Returns plot of raster data
         '''
+        if 'extent' not in kwargs:
+            kwargs['extent'] = self.extent
         if ax is None:
             fig, ax = plt.subplots(figsize=figsize)
         ax.set_aspect('equal')
