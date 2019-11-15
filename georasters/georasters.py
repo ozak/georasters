@@ -890,8 +890,15 @@ class GeoRaster(object):
                              self.xmin, self.ymax)
         col2 = np.abs(radius/self.x_cell_size).astype(int)
         row2 = np.abs(radius/self.y_cell_size).astype(int)
-        return GeoRaster(self.raster[max(row-row2, 0):min(row+row2+1, self.shape[0]), \
-                        max(col-col2, 0):min(col+col2+1, self.shape[1]), ...], self.geot,
+        index_xmin = max(col-col2, 0)
+        index_xmax = min(col+col2+1, self.shape[1])
+        index_ymin = max(row-row2, 0)
+        index_ymax = min(row+row2+1, self.shape[0])
+        xmin = self.xmin + index_xmin * self.x_cell_size
+        ymax = self.ymax + index_ymin * self.y_cell_size
+        geot = (xmin, self.geot[1], self.geot[2], ymax, self.geot[4], self.geot[5])
+        return GeoRaster(self.raster[index_ymin:index_ymax, \
+                        index_xmin:index_xmax, ...], geot,
                         nodata_value=self.nodata_value,\
                         projection=self.projection, datatype=self.datatype)
 
