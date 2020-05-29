@@ -1,0 +1,39 @@
+import georasters as gr
+import hmi
+import os
+A = gr.from_file(hmi.__path__[0]+'/data/HMI10.tif')
+A
+B = A.to_pandas()
+B.head()
+B.columns
+C = gr.from_pandas(B, cellx=A.x_cell_size, celly=A.y_cell_size, projection=A.projection)
+#C = gr.from_pandas(B[['x', 'y', 'value']], cellx=A.x_cell_size, celly=A.y_cell_size)
+C.mean()
+import georasters as gr
+import hmi
+import os
+A = gr.from_file(hmi.__path__[0]+'/data/HMI10.tif')
+A
+B = A.to_pandas()
+B.head()
+B.columns
+C = gr.from_pandas(B, cellx=A.x_cell_size, celly=A.y_cell_size, projection=A.projection, nodata_value=np.nan)
+C.raster.mask = np.isnan(C.raster)
+C.mean()
+A.mean()
+D = gr.union([A, C])
+D.shape
+A.shape
+C.shape
+D.plot()
+D.mean()
+D.sum()
+[A1, C1] = gr.align_georasters(A, C)
+A1.shape
+C1.shape
+A1.plot()
+C1.plot()
+A1-C1
+(A1-C1).mean()
+(D-A).sum()
+(A1-C1).sum()
