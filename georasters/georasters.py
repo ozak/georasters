@@ -43,7 +43,7 @@ from shapely.geometry import Polygon, LineString
 from affine import Affine
 from rasterstats import zonal_stats
 import pysal
-if pysal.__version__.startswith('2'):
+if pysal.__version__.startswith('2.1'):
     from pysal.explore.esda import G as pysal_G
     from pysal.explore.esda import G_Local as pysal_G_Local
     from pysal.explore.esda import Gamma as pysal_Gamma
@@ -53,6 +53,16 @@ if pysal.__version__.startswith('2'):
     from pysal.explore.esda import Geary as pysal_Geary
     from pysal.lib.weights import lat2W as pysal_lat2W
     from pysal.lib.weights import W as pysal_W
+elif pysal.__version__.startswith('2') and pysal.__version__.startswith('2.1')==False:
+    from esda import G as pysal_G
+    from esda import G_Local as pysal_G_Local
+    from esda import Gamma as pysal_Gamma
+    from esda import Join_Counts as pysal_Join_Counts
+    from esda import Moran as pysal_Moran
+    from esda import Moran_Local as pysal_Moran_Local
+    from esda import Geary as pysal_Geary
+    from libpysal.weights import lat2W as pysal_lat2W
+    from libpysal.weights import W as pysal_W
 else:
     from pysal import G as pysal_G
     from pysal import G_Local as pysal_G_Local
