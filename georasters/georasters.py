@@ -90,7 +90,7 @@ def get_geo_info(filename, band=1):
     return ndv, xsize, ysize, geot, projection, datatype
 
 # Function to map location in pixel of raster array
-def map_pixel(point_x, point_y, cellx, celly, xmin, ymax):
+def map_pixel(point_x, point_y, cellx, celly, xmin, ymax, floor=True):
     '''
     Usage:
         map_pixel(xcoord, ycoord, x_cell_size, y_cell_size, xmin, ymax)
@@ -109,8 +109,12 @@ def map_pixel(point_x, point_y, cellx, celly, xmin, ymax):
     '''
     point_x = np.asarray(point_x)
     point_y = np.asarray(point_y)
-    col = np.round((point_x - xmin) / cellx).astype(int)
-    row = np.round((point_y - ymax) / celly).astype(int)
+    if floor:
+        col = np.floor((point_x - xmin) / cellx).astype(int)
+        row = np.floor((point_y - ymax) / celly).astype(int)
+    else:
+        col = np.round((point_x - xmin) / cellx).astype(int)
+        row = np.round((point_y - ymax) / celly).astype(int)
     return row, col
 
 def map_pixel_inv(row, col, cellx, celly, xmin, ymax):
@@ -1253,7 +1257,7 @@ def union(rasters):
         latmin = min([i.ymin for i in rasters])
         latmax = max([i.ymax for i in rasters])
         shape = (np.abs(np.floor((latmax-latmin)/rasters[0].y_cell_size)).astype(int), np.floor((lonmax-lonmin)/rasters[0].x_cell_size).astype(int))
-        out = ndv*np.ones(shape)
+        out = ndv * np.ones(shape)
         outmask = np.ones(shape).astype(bool)
         for i in rasters:
             (row, col) = map_pixel(i.xmin, i.ymax, rasters[0].x_cell_size, rasters[0].y_cell_size, lonmin, latmax)
@@ -1308,7 +1312,7 @@ def from_pandas(df, value='value', x='x', y='y', cellx=None, celly=None, xmin=No
         xmin = df[x].min()
     if not ymax:
         ymax = df[y].max()
-    row, col = map_pixel(df[x], df[y], cellx, celly, xmin, ymax)
+    row, col = map_pixel(df[x], df[y], cellx, celly, xmin, ymax, floor=False)
     dfout = pd.DataFrame(np.array([row, col, df[value]]).T, columns=['row', 'col', 'value'])
     dfout = dfout = dfout.set_index(["row","col"]).unstack().value.reindex(index=np.arange(0,np.max(row)+1)).T.reindex(index=np.arange(0,np.max(col)+1)).T
     if nodata_value:
