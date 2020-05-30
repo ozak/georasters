@@ -90,7 +90,7 @@ def get_geo_info(filename, band=1):
     return ndv, xsize, ysize, geot, projection, datatype
 
 # Function to map location in pixel of raster array
-def map_pixel(point_x, point_y, cellx, celly, xmin, ymax, floor=True):
+def map_pixel(point_x, point_y, cellx, celly, xmin, ymax, floor=False):
     '''
     Usage:
         map_pixel(xcoord, ycoord, x_cell_size, y_cell_size, xmin, ymax)
@@ -1260,7 +1260,7 @@ def union(rasters):
         out = ndv * np.ones(shape)
         outmask = np.ones(shape).astype(bool)
         for i in rasters:
-            (row, col) = map_pixel(i.xmin, i.ymax, rasters[0].x_cell_size, rasters[0].y_cell_size, lonmin, latmax)
+            (row, col) = map_pixel(i.xmin, i.ymax, rasters[0].x_cell_size, rasters[0].y_cell_size, lonmin, latmax, floor=True)
             out[row:row+i.shape[0], col:col+i.shape[1]] = np.where(i.raster.data != i.nodata_value, i.raster.data,\
                                                          out[row:row+i.shape[0], col:col+i.shape[1]])
             outmask[row:row+i.shape[0], col:col+i.shape[1]] = np.where(i.raster.mask == False, False,\
@@ -1312,7 +1312,7 @@ def from_pandas(df, value='value', x='x', y='y', cellx=None, celly=None, xmin=No
         xmin = df[x].min()
     if not ymax:
         ymax = df[y].max()
-    row, col = map_pixel(df[x], df[y], cellx, celly, xmin, ymax, floor=False)
+    row, col = map_pixel(df[x], df[y], cellx, celly, xmin, ymax)
     dfout = pd.DataFrame(np.array([row, col, df[value]]).T, columns=['row', 'col', 'value'])
     dfout = dfout = dfout.set_index(["row","col"]).unstack().value.reindex(index=np.arange(0,np.max(row)+1)).T.reindex(index=np.arange(0,np.max(col)+1)).T
     if nodata_value:
