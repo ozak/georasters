@@ -1,0 +1,3 @@
+#!/bin/bash
+wget -q --no-check-certificate 'https://docs.google.com/uc?export=download&id=0By-h7HPv1NhVbkg4RjBVWFdLV0E' -O pre1500MaxCalories.tif
+wget -q --no-check-certificate 'https://docs.google.com/uc?export=download&id=0By-h7HPv1NhVamdlWEtSSlpKOTA' -O post1500MaxCalories.tif
