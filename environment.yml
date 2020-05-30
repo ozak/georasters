@@ -1,9 +1,11 @@
-name: GeoPython37env
+name: GeoPython38env
 channels:
   - conda-forge
+  - conda-forge/label/broken
 dependencies:
-  - python==3.7
+  - python==3.8
   - pip
+  - gdal
   - numpy
   - pandas
   - docopt
