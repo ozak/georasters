@@ -5,7 +5,7 @@ channels:
   - rapidsai
   - mro
   - r
-  - defaults
+#  - defaults
 dependencies:
   - python==3.7
   - pip
