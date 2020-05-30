@@ -22,3 +22,5 @@ dependencies:
   - pysal
   - affine
   - rasterstats >=0.12
+  - pip:
+    - googledrivedownloader
