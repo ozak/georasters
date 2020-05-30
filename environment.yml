@@ -1,11 +1,6 @@
 name: GeoPython37env
 channels:
   - conda-forge
-  - numba
-  - rapidsai
-  - mro
-  - r
-#  - defaults
 dependencies:
   - python==3.7
   - pip
