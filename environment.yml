@@ -16,6 +16,7 @@ dependencies:
   - coverage
   - fiona
   - geopandas
+  - descartes
   - pysal
   - affine
   - rasterstats >=0.12
