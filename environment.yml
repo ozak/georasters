@@ -1,7 +1,6 @@
 name: GeoPython38env
 channels:
   - conda-forge
-  - conda-forge/label/broken
 dependencies:
   - python==3.8
   - pip
@@ -19,6 +18,9 @@ dependencies:
   - descartes
   - pysal
   - affine
-  - rasterstats >=0.12
+  - rasterstats>=0.12
+  - statsmodels
+  - seaborn
+  - geoplot
   - pip:
     - googledrivedownloader
