@@ -22,5 +22,6 @@ dependencies:
   - statsmodels
   - seaborn
   - geoplot
+  - html5lib
   - pip:
     - googledrivedownloader
