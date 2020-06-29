@@ -71,7 +71,7 @@ else:
     from pysal import Moran as pysal_Moran
     from pysal import Moran_Local as pysal_Moran_Local
     from pysal import Geary as pysal_Geary
-    from pysal import lat2W as pydal_lat2W
+    from pysal import lat2W as pysal_lat2W
     from pysal import W as pysal_W
 
 # Function to read the original file's projection:
