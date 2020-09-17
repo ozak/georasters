@@ -1256,7 +1256,7 @@ def union(rasters):
         lonmax = max([i.xmax for i in rasters])
         latmin = min([i.ymin for i in rasters])
         latmax = max([i.ymax for i in rasters])
-        shape = (np.abs(np.floor((latmax-latmin)/rasters[0].y_cell_size)).astype(int), np.floor((lonmax-lonmin)/rasters[0].x_cell_size).astype(int))
+        shape = (np.abs(np.round((latmax-latmin)/rasters[0].y_cell_size)).astype(int), np.round((lonmax-lonmin)/rasters[0].x_cell_size).astype(int))
         out = ndv * np.ones(shape)
         outmask = np.ones(shape).astype(bool)
         for i in rasters:
