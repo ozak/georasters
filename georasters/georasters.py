@@ -345,7 +345,10 @@ class GeoRaster(object):
         geot[0] += indx[0].start*geot[1]
         geot[3] += indx[1].start*geot[-1]
         geot = tuple(geot)
-        return GeoRaster(rast, geot, nodata, proj, datatype)
+        return GeoRaster(rast, geot,
+                         nodata_value=nodata,
+                         projection=proj,
+                         datatype=datatype)
 
     def __getslice__(self, i, j):
         return self.raster.__getslice__(i, j)
