@@ -778,7 +778,7 @@ class GeoRaster(object):
                                                            datatype=self.datatype), axis=1)
             return df['GeoRaster'].values
 
-    def stats(self, shp, stats='mean', add_stats=None, raster_out=True, *args, **kwargs):
+    def stats(self, shp, stats='mean', add_stats=None, raster_out=True, name=None, *args, **kwargs):
         '''
         Compute raster statistics for a given geometry in shape, where shape is either
         a GeoPandas DataFrame, shapefile, or some other geometry format used by
@@ -798,17 +798,24 @@ class GeoRaster(object):
                                       all_touched=True, raster_out=raster_out,
                                       affine=Affine.from_gdal(*self.geot),
                                       geojson_out=True, stats=stats, add_stats=add_stats))
-        df['GeoRaster'] = df.properties.apply(lambda x: GeoRaster(x['mini_raster_array'],
-                                                                  Affine.to_gdal(x['mini_raster_affine']),
-                                                                  nodata_value=x['mini_raster_nodata'],
-                                                                  projection=self.projection,
-                                                                  datatype=self.datatype))
+        if raster_out:
+            df['GeoRaster'] = df.properties.apply(lambda x: GeoRaster(x['mini_raster_array'],
+                                                                      Affine.to_gdal(x['mini_raster_affine']),
+                                                                      nodata_value=x['mini_raster_nodata'],
+                                                                      projection=self.projection,
+                                                                      datatype=self.datatype))
         statcols = list(set([i for i in df.properties[0].keys()]).difference(set(shp.columns)))
-        cols = shp.columns.tolist()+statcols
+        cols = shp.columns.tolist() + statcols
         cols = [i for i in cols if i != 'geometry' and i.find('mini_raster') == -1]
         df2 = pd.DataFrame([df.properties.apply(lambda x: x[i]) for i in cols]).T
+        if name is not None:
+            cols2 = shp.columns.difference(['geometry', 'mini_raster']).tolist()
+            cols = cols2 + [name + '_' + i for i in cols[len(cols2):]]
         df2.columns = cols
-        df2 = df2.merge(df[['id', 'GeoRaster']], left_index=True, right_index=True)
+        if raster_out:
+            df2 = df2.merge(df[['id', 'GeoRaster']], left_index=True, right_index=True)
+        else:
+            df2 = df2.merge(df[['id']], left_index=True, right_index=True)
         df2.set_index('id', inplace=True)
         return df2
 
