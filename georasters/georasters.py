@@ -31,7 +31,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import division
 import numpy as np
 from osgeo import gdal, gdalnumeric, ogr, osr, gdal_array
-from gdalconst import GA_ReadOnly
+try:
+    from gdalconst import GA_ReadOnly
+except:
+    from osgeo.gdalconst import GA_ReadOnly
 from skimage.measure import block_reduce
 from skimage.transform import resize
 import skimage.graph as graph
