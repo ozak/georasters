@@ -542,12 +542,12 @@ class GeoRaster(object):
         create_geotiff(filename, self.raster, gdal.GetDriverByName('GTiff'), self.nodata_value,
                        self.shape[1], self.shape[0], self.geot, self.projection, self.datatype)
 
-    def to_pandas(self, **kwargs):
+    def to_pandas(self, dropna=True, **kwargs):
         """
         Convert GeoRaster to Pandas DataFrame, which can be easily exported to other types of files
         The DataFrame has the row, col, value, x, and y values for each cell
         """
-        df = to_pandas(self, **kwargs)
+        df = to_pandas(self, dropna, **kwargs)
         return df
 
     def to_geopandas(self, **kwargs):
@@ -1437,7 +1437,7 @@ def is_geovalid(grasterlist):
 
 # Convert GeoRaster to Pandas DataFrame, which can be easily exported to other types of files
 # Function to
-def to_pandas(raster, name='value'):
+def to_pandas(raster, name='value', dropna=True):
     """
     Convert GeoRaster to Pandas DataFrame, which can be easily exported to other types of files
     The DataFrame has the row, col, value, x, and y values for each cell
@@ -1445,7 +1445,7 @@ def to_pandas(raster, name='value'):
         df = gr.to_pandas(raster)
     """
     df = pd.DataFrame(raster.raster)
-    df = df.stack()
+    df = df.stack(dropna=dropna)
     df = df.reset_index()
     df.columns = ['row', 'col', name]
     df['x'] = df.col.apply(lambda col: raster.geot[0]+(col)*raster.geot[1])
@@ -1459,7 +1459,7 @@ def squares(row, georaster=None):
                         (row.x,row.y+georaster.y_cell_size)])
     return geometry
 
-def to_geopandas(raster, **kwargs):
+def to_geopandas(raster, dropna=True, **kwargs):
     """
     Convert GeoRaster to GeoPandas DataFrame, which can be easily exported to other types of files
     and used to do other types of operations.
@@ -1467,7 +1467,7 @@ def to_geopandas(raster, **kwargs):
     Usage:
         df = gr.to_geopandas(raster)
     """
-    df = to_pandas(raster, **kwargs)
+    df = to_pandas(raster, dropna, **kwargs)
     df['geometry'] = df.apply(squares, georaster=raster, axis=1)
     df = gp.GeoDataFrame(df, crs=from_string(raster.projection.ExportToProj4()))
     return df
