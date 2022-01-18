@@ -1459,7 +1459,7 @@ def squares(row, georaster=None):
                         (row.x,row.y+georaster.y_cell_size)])
     return geometry
 
-def to_geopandas(raster, dropna=True, **kwargs):
+def to_geopandas(raster, name='value', dropna=True, **kwargs):
     """
     Convert GeoRaster to GeoPandas DataFrame, which can be easily exported to other types of files
     and used to do other types of operations.
@@ -1467,7 +1467,7 @@ def to_geopandas(raster, dropna=True, **kwargs):
     Usage:
         df = gr.to_geopandas(raster)
     """
-    df = to_pandas(raster, dropna, **kwargs)
+    df = to_pandas(raster, name=name, dropna=dropna, **kwargs)
     df['geometry'] = df.apply(squares, georaster=raster, axis=1)
     df = gp.GeoDataFrame(df, crs=from_string(raster.projection.ExportToProj4()))
     return df
