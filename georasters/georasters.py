@@ -175,7 +175,7 @@ def create_geotiff(name, Array, driver, ndv, xsize, ysize, geot, projection, dat
     '''
     Creates new geotiff from array
     '''
-    if isinstance(datatype, np.int) == False:
+    if isinstance(datatype, np.int32) == False:
         if datatype.startswith('gdal.GDT_') == False:
             datatype = eval('gdal.GDT_'+datatype)
     newfilename = name+'.tif'
@@ -1374,12 +1374,12 @@ def align_georasters(raster, alignraster, how=np.mean, cxsize=None, cysize=None)
                                                              alignraster.projection,
                                                              alignraster.datatype)
     if projection1.ExportToMICoordSys() == projection2.ExportToMICoordSys():
-        blocksize = (np.round(max(geot2[1]/geot1[1], 1)).astype(np.int), np.round(max(geot2[-1]/geot1[-1], 1)).astype(np.int))
+        blocksize = (np.round(max(geot2[1]/geot1[1], 1)).astype(np.int32), np.round(max(geot2[-1]/geot1[-1], 1)).astype(np.int32))
         mraster = raster.raster
         mmin = mraster.min()
         if block_reduce != (1, 1):
             mraster = block_reduce(mraster, blocksize, func=how)
-        blocksize = (np.round(max(geot1[1]/geot2[1], 1)).astype(np.int), np.round(max(geot1[-1]/geot2[-1], 1)).astype(np.int))
+        blocksize = (np.round(max(geot1[1]/geot2[1], 1)).astype(np.int32), np.round(max(geot1[-1]/geot2[-1], 1)).astype(np.int32))
         araster = alignraster.raster
         amin = araster.min()
         if block_reduce != (1, 1):
