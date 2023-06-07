@@ -175,7 +175,7 @@ def create_geotiff(name, Array, driver, ndv, xsize, ysize, geot, projection, dat
     '''
     Creates new geotiff from array
     '''
-    if isinstance(datatype, np.int32) == False:
+    if isinstance(datatype, int) == False:
         if datatype.startswith('gdal.GDT_') == False:
             datatype = eval('gdal.GDT_'+datatype)
     newfilename = name+'.tif'
