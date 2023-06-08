@@ -1276,7 +1276,7 @@ def union(rasters, floor=True):
         out = ndv * np.ones(shape)
         outmask = np.ones(shape).astype(bool)
         for i in rasters:
-            (row, col) = map_pixel(i.xmin, i.ymax, rasters[0].x_cell_size, rasters[0].y_cell_size, lonmin, latmax, floor=True)
+            (row, col) = map_pixel(i.xmin, i.ymax, rasters[0].x_cell_size, rasters[0].y_cell_size, lonmin, latmax, floor=floor)
             out[row:row+i.shape[0], col:col+i.shape[1]] = np.where(i.raster.data != i.nodata_value, i.raster.data,\
                                                          out[row:row+i.shape[0], col:col+i.shape[1]])
             outmask[row:row+i.shape[0], col:col+i.shape[1]] = np.where(i.raster.mask == False, False,\
