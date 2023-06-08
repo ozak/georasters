@@ -572,13 +572,13 @@ class GeoRaster(object):
         plt.draw()
         return ax
 
-    def union(self, other):
+    def union(self, other, floor=False):
         '''
         geo.union(Georaster)
 
         Returns union of GeoRaster with another one
         '''
-        return union([self, other])
+        return union([self, other], floor=floor)
 
     def merge(self, other):
         '''
@@ -1242,7 +1242,7 @@ class GeoRaster(object):
 ##########################################
 
 # Union of rasters
-def union(rasters, floor=True):
+def union(rasters, floor=False):
     """
     Union of rasters
 
