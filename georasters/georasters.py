@@ -45,6 +45,8 @@ import geopandas as gp
 from shapely.geometry import Polygon, LineString
 from affine import Affine
 from rasterstats import zonal_stats
+import rasterio
+from shapely.geometry import shape
 import pysal
 if pysal.__version__.startswith('2.1'):
     from pysal.explore.esda import G as pysal_G
@@ -893,7 +895,7 @@ class GeoRaster(object):
         '''
         geo.extract(x, y, radius=r)
 
-        Return subraster of raster geo around location (x,y) with radius r
+        Returns subraster of raster geo around location (x,y) with radius r
         where (x,y) and r are in the same coordinate system as geo
         '''
         row, col = map_pixel(point_x, point_y, self.x_cell_size, self.y_cell_size,
@@ -902,6 +904,20 @@ class GeoRaster(object):
         row2 = np.abs(radius/self.y_cell_size).astype(int)
         return GeoRaster(self.raster[max(row-row2, 0):min(row+row2+1, self.shape[0]), \
                         max(col-col2, 0):min(col+col2+1, self.shape[1])], self.geot,
+                        nodata_value=self.nodata_value,\
+                        projection=self.projection, datatype=self.datatype)
+
+    def extent(self, xmin, ymin, xmax, ymax):
+        '''
+        geo.extent(xmin, ymin, xmax, ymax)
+
+        Returns subraster of raster geo in extent
+        where (xmin, ymin, xmax, ymax) are in the same coordinate system as geo
+        usually comes from total_bounds of a geopandas dataframe
+        '''
+        row, col = self.map_pixel_location(xmin, ymin)
+        row2, col2 = self.map_pixel_location(xmax, ymax)
+        return GeoRaster(self.raster[row2:row, col:col2], self.geot,
                         nodata_value=self.nodata_value,\
                         projection=self.projection, datatype=self.datatype)
 
@@ -1440,19 +1456,18 @@ def is_geovalid(grasterlist):
 
 # Convert GeoRaster to Pandas DataFrame, which can be easily exported to other types of files
 # Function to
-def to_pandas(raster, name='value', dropna=True):
+def to_pandas(raster, name='value', dropna=True, **kwargs):
     """
     Convert GeoRaster to Pandas DataFrame, which can be easily exported to other types of files
     The DataFrame has the row, col, value, x, and y values for each cell
     Usage:
         df = gr.to_pandas(raster)
     """
-    df = pd.DataFrame(raster.raster)
-    df = df.stack(dropna=dropna)
-    df = df.reset_index()
-    df.columns = ['row', 'col', name]
-    df['x'] = df.col.apply(lambda col: raster.geot[0]+(col)*raster.geot[1])
-    df['y'] = df.row.apply(lambda row: raster.geot[3]+(row)*raster.geot[-1])
+    df = to_geopandas(raster, name='value', dropna=True, **kwargs)
+    df['x'] = df['geometry'].centroid.x
+    df['y'] = df['geometry'].centroid.y
+    df.drop(columns=['geometry'], inplace=True)
+    df[['row', 'col']] = raster.map_pixel_location(df['geometry'].centroid.x, df['geometry'].centroid.y)
     return df
 
 # Convert GeoRaster to GeoPandas
@@ -1470,10 +1485,11 @@ def to_geopandas(raster, name='value', dropna=True, **kwargs):
     Usage:
         df = gr.to_geopandas(raster)
     """
-    df = to_pandas(raster, name=name, dropna=dropna, **kwargs)
-    df['geometry'] = df.apply(squares, georaster=raster, axis=1)
-    df = gp.GeoDataFrame(df, crs=from_string(raster.projection.ExportToProj4()))
-    return df
+    polygons = []
+    for shp, val in rasterio.features.shapes(raster.raster, transform=Affine.from_gdal(*raster.geot)):
+        polygons.append([val, shape(shp)])
+    polygons = gp.GeoDataFrame(polygons, crs='EPSG:4326', columns=[name, 'geometry'])
+    return polygons
 
 def raster_weights(raster, rook=False, transform='r', **kwargs):
     """
