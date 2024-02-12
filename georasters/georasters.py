@@ -814,7 +814,7 @@ class GeoRaster(object):
         cols = [i for i in cols if i != 'geometry' and i.find('mini_raster') == -1]
         df2 = pd.DataFrame([df.properties.apply(lambda x: x[i]) for i in cols]).T
         if name is not None:
-            cols2 = shp.columns.difference(['geometry', 'mini_raster']).tolist()
+            cols2 = shp.columns.difference(['geometry', 'mini_raster'], sort=False).tolist()
             cols = cols2 + [name + '_' + i for i in cols[len(cols2):]]
         df2.columns = cols
         if raster_out:
