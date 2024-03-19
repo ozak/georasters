@@ -41,6 +41,7 @@ import skimage.graph as graph
 import matplotlib.pyplot as plt
 import pandas as pd
 from fiona.crs import from_string
+from pyproj import CRS
 import geopandas as gp
 from shapely.geometry import Polygon, LineString
 from affine import Affine
@@ -544,12 +545,12 @@ class GeoRaster(object):
         create_geotiff(filename, self.raster, gdal.GetDriverByName('GTiff'), self.nodata_value,
                        self.shape[1], self.shape[0], self.geot, self.projection, self.datatype)
 
-    def to_pandas(self, dropna=True, **kwargs):
+    def to_pandas(self, **kwargs):
         """
         Convert GeoRaster to Pandas DataFrame, which can be easily exported to other types of files
         The DataFrame has the row, col, value, x, and y values for each cell
         """
-        df = to_pandas(self, dropna, **kwargs)
+        df = to_pandas(self, **kwargs)
         return df
 
     def to_geopandas(self, **kwargs):
@@ -1463,11 +1464,11 @@ def to_pandas(raster, name='value', dropna=True, **kwargs):
     Usage:
         df = gr.to_pandas(raster)
     """
-    df = to_geopandas(raster, name='value', dropna=True, **kwargs)
+    df = to_geopandas(raster, name=name, dropna=dropna, **kwargs)
     df['x'] = df['geometry'].centroid.x
     df['y'] = df['geometry'].centroid.y
+    df[['row', 'col']] = raster.map_pixel_location(df['x'], df['y']).T
     df.drop(columns=['geometry'], inplace=True)
-    df[['row', 'col']] = raster.map_pixel_location(df['geometry'].centroid.x, df['geometry'].centroid.y)
     return df
 
 # Convert GeoRaster to GeoPandas
@@ -1485,10 +1486,13 @@ def to_geopandas(raster, name='value', dropna=True, **kwargs):
     Usage:
         df = gr.to_geopandas(raster)
     """
+    raster2 = raster.copy()
+    if raster2.datatype.lower() == 'float64':
+        raster2.raster = raster2.raster.astype('float32')
     polygons = []
-    for shp, val in rasterio.features.shapes(raster.raster, transform=Affine.from_gdal(*raster.geot)):
+    for shp, val in rasterio.features.shapes(raster2.raster, transform=Affine.from_gdal(*raster2.geot)):
         polygons.append([val, shape(shp)])
-    polygons = gp.GeoDataFrame(polygons, crs='EPSG:4326', columns=[name, 'geometry'])
+    polygons = gp.GeoDataFrame(polygons, crs=CRS(raster2.projection.ExportToProj4()), columns=[name, 'geometry'])
     return polygons
 
 def raster_weights(raster, rook=False, transform='r', **kwargs):

@@ -23,7 +23,7 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 setup(name='georasters',
-      version='0.5.28',
+      version='0.5.29',
       description='Tools for working with Geographical Information System Rasters',
       url='http://github.com/ozak/georasters',
       keywords="gis geospatial geographic raster vector zonal statistics spatial analysis",
@@ -72,6 +72,7 @@ setup(name='georasters',
           'Programming Language :: Python :: 3.9',
           'Programming Language :: Python :: 3.10',
           'Programming Language :: Python :: 3.11',
+          'Programming Language :: Python :: 3.12',
       ],
       zip_safe=False,
       )
