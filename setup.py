@@ -8,7 +8,7 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 def readme():
-    with open('README.rst') as f:
+    with open('README.md') as f:
         return f.read()
 
 class PyTest(TestCommand):
@@ -32,7 +32,7 @@ setup(name='georasters',
       license='GPLv3',
       #package_dir={'': 'src'},
       packages=['georasters'],
-      long_description=read('README.rst'),
+      long_description=read('README.md'),
       install_requires=[
                 'numpy',
                 'pandas',
