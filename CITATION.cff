@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Özak
+    given-names: Ömer
+    orcid: https://orcid.org/0000-0001-6421-2801
+title: "GeoRasters"
+license: GPL-3.0-or-later
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.4058462
+version: 0.5.29
+date-released: 2024-12-06
