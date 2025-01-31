@@ -267,19 +267,6 @@ def align_rasters(raster, alignraster, how=np.ma.mean, cxsize=None, cysize=None,
         print("Rasters need to be in same projection")
         return (-1, -1, -1)
 
-# Load geotif raster data
-def load_tiff(file):
-    """
-    Load a geotiff raster keeping ndv values using a masked array
-
-    Usage:
-            data = load_tiff(file)
-    """
-    ndv, xsize, ysize, geot, projection, datatype = get_geo_info(file)
-    data = gdalnumeric.LoadFile(file)
-    data = np.ma.masked_array(data, mask=data == ndv, fill_value=ndv)
-    return data
-
 class RasterGeoTError(Exception):
     pass
 
@@ -323,14 +310,6 @@ class GeoRaster(object):
                                              fill_value=fill_value)
         self.geot = geot
         self.nodata_value = nodata_value
-        self.shape = raster.shape
-        self.x_cell_size = geot[1]
-        self.y_cell_size = geot[-1]
-        self.xmin = geot[0]
-        self.ymax = geot[3]
-        self.xmax = self.xmin + self.x_cell_size * self.shape[1]
-        self.ymin = self.ymax + self.y_cell_size * self.shape[0]
-        self.bounds = (self.xmin, self.ymin, self.xmax, self.ymax)
         self.projection = projection
         self.datatype = datatype
         self.mcp_cost = None
@@ -341,6 +320,42 @@ class GeoRaster(object):
         self.Moran = None
         self.Geary = None
         self.Moran_Local = None
+
+    @property
+    def shape(self):
+        return self.raster.shape
+
+    @property
+    def x_cell_size(self):
+        return self.geot[1]
+
+    @property
+    def y_cell_size(self):
+        return self.geot[-1]
+
+    @property
+    def xmin(self):
+        return self.geot[0]
+
+    @property
+    def xmax(self):
+        return self.xmin + self.x_cell_size * self.shape[1]
+
+    @property
+    def ymin(self):
+        return self.ymax + self.y_cell_size * self.shape[0]
+
+    @property
+    def ymax(self):
+        return self.geot[3]
+
+    @property
+    def bounds(self):
+        return (self.xmin, self.ymin, self.xmax, self.ymax)
+
+    @property
+    def extent(self):
+        return (self.xmin, self.xmax, self.ymin, self.ymax)
 
     def __getitem__(self, indx):
         rast = self.raster.__getitem__(indx)
@@ -568,6 +583,8 @@ class GeoRaster(object):
 
         Returns plot of raster data
         '''
+        if 'extent' not in kwargs:
+            kwargs['extent'] = self.extent
         if ax is None:
             fig, ax = plt.subplots(figsize=figsize)
         ax.set_aspect('equal')
@@ -903,8 +920,15 @@ class GeoRaster(object):
                              self.xmin, self.ymax)
         col2 = np.abs(radius/self.x_cell_size).astype(int)
         row2 = np.abs(radius/self.y_cell_size).astype(int)
-        return GeoRaster(self.raster[max(row-row2, 0):min(row+row2+1, self.shape[0]), \
-                        max(col-col2, 0):min(col+col2+1, self.shape[1])], self.geot,
+        index_xmin = max(col-col2, 0)
+        index_xmax = min(col+col2+1, self.shape[1])
+        index_ymin = max(row-row2, 0)
+        index_ymax = min(row+row2+1, self.shape[0])
+        xmin = self.xmin + index_xmin * self.x_cell_size
+        ymax = self.ymax + index_ymin * self.y_cell_size
+        geot = (xmin, self.geot[1], self.geot[2], ymax, self.geot[4], self.geot[5])
+        return GeoRaster(self.raster[index_ymin:index_ymax, \
+                        index_xmin:index_xmax, ...], geot,
                         nodata_value=self.nodata_value,\
                         projection=self.projection, datatype=self.datatype)
 
@@ -1321,6 +1345,9 @@ def from_file(filename, **kwargs):
     ndv, xsize, ysize, geot, projection, datatype = get_geo_info(filename, **kwargs)
     data = gdalnumeric.LoadFile(filename, **kwargs)
     data = np.ma.masked_array(data, mask=data == ndv, fill_value=ndv)
+    if data.ndim == 3:
+        # move the raster-band axis to the end
+        data = np.moveaxis(data, 0, -1)
     return GeoRaster(data, geot, nodata_value=ndv, projection=projection, datatype=datatype)
 
 # Convert Pandas DataFrame to raster
