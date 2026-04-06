@@ -133,3 +133,17 @@ def test_stats10():
     raster = os.path.join(DATA, 'pre1500.tif')
     data = gr.from_file(raster)
     assert data.count() == data.raster.count()
+
+def test_to_tiff_no_duplicate_extension(tmp_path):
+    """Issue #46: to_tiff should not double-append .tif extension."""
+    import georasters as gr
+    data = gr.from_file(os.path.join(DATA, 'pre1500.tif'))
+    # Pass filename WITH .tif extension
+    out = str(tmp_path / 'output.tif')
+    data.to_tiff(out)
+    assert (tmp_path / 'output.tif').exists(), "output.tif should exist"
+    assert not (tmp_path / 'output.tif.tif').exists(), "output.tif.tif should NOT exist"
+    # Pass filename WITHOUT extension — should still produce .tif
+    out2 = str(tmp_path / 'output2')
+    data.to_tiff(out2)
+    assert (tmp_path / 'output2.tif').exists(), "output2.tif should exist"

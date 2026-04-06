@@ -181,7 +181,13 @@ def create_geotiff(name, Array, driver, ndv, xsize, ysize, geot, projection, dat
     if isinstance(datatype, int) == False:
         if datatype.startswith('gdal.GDT_') == False:
             datatype = eval('gdal.GDT_'+datatype)
-    newfilename = name+'.tif'
+    # Strip any existing .tif/.tiff extension to avoid duplication
+    _base = name
+    if _base.lower().endswith('.tiff'):
+        _base = _base[:-5]
+    elif _base.lower().endswith('.tif'):
+        _base = _base[:-4]
+    newfilename = _base + '.tif'
     # Set nans to the original No Data Value
     Array[np.isnan(Array)] = ndv
     # Set up the dataset
