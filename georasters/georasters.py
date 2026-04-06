@@ -181,9 +181,16 @@ def create_geotiff(name, Array, driver, ndv, xsize, ysize, geot, projection, dat
     if isinstance(datatype, int) == False:
         if datatype.startswith('gdal.GDT_') == False:
             datatype = eval('gdal.GDT_'+datatype)
-    newfilename = name+'.tif'
+    # Strip any existing .tif/.tiff extension to avoid duplication
+    _base = name
+    if _base.lower().endswith('.tiff'):
+        _base = _base[:-5]
+    elif _base.lower().endswith('.tif'):
+        _base = _base[:-4]
+    newfilename = _base + '.tif'
     # Set nans to the original No Data Value
-    Array[np.isnan(Array)] = ndv
+    if ndv is not None:
+        Array[np.isnan(Array)] = ndv
     # Set up the dataset
     DataSet = driver.Create(newfilename, xsize, ysize, 1, datatype)
     # the '1' is for band 1.
@@ -191,7 +198,8 @@ def create_geotiff(name, Array, driver, ndv, xsize, ysize, geot, projection, dat
     DataSet.SetProjection(projection.ExportToWkt())
     # Write the array
     DataSet.GetRasterBand(band).WriteArray(Array)
-    DataSet.GetRasterBand(band).SetNoDataValue(ndv)
+    if ndv is not None:
+        DataSet.GetRasterBand(band).SetNoDataValue(ndv)
     return newfilename
 
 # Function to aggregate and align rasters
@@ -541,7 +549,8 @@ class GeoRaster(object):
                 else:
                     self.raster = self.raster.astype(np.float64)
                     self.datatype = gdal_array.NumericTypeCodeToGDALTypeCode(self.raster.data.dtype)
-        self.raster.data[self.raster.mask] = self.nodata_value
+        if self.nodata_value is not None:
+            self.raster.data[self.raster.mask] = self.nodata_value
         create_geotiff(filename, self.raster, gdal.GetDriverByName('GTiff'), self.nodata_value,
                        self.shape[1], self.shape[0], self.geot, self.projection, self.datatype)
 
@@ -937,26 +946,39 @@ class GeoRaster(object):
 
         Returns copy of raster aggregated to smaller resolution, by adding cells.
         '''
-        raster2 = block_reduce(self.raster, block_size, func=np.ma.sum)
+        # Reduce data on unmasked values only; reduce mask so a block is masked
+        # only when every pixel in it is masked.
+        data2 = block_reduce(self.raster.filled(0), block_size, func=np.sum)
+        mask2 = block_reduce(np.ma.getmaskarray(self.raster).astype(np.uint8),
+                             block_size, func=np.max).astype(bool)
+        raster2 = np.ma.masked_array(data2, mask=mask2,
+                                     fill_value=self.nodata_value)
         geot = self.geot
         geot = (geot[0], block_size[0] * geot[1], geot[2], geot[3], geot[4],
                 block_size[1] * geot[-1])
-        return GeoRaster(raster2, geot, nodata_value=self.nodata_value,\
-                        projection=self.projection, datatype=self.datatype)
+        return GeoRaster(raster2, geot, nodata_value=self.nodata_value,
+                         projection=self.projection, datatype=self.datatype)
 
     def block_reduce(self, block_size, how=np.ma.mean):
         '''
         geo.block_reduce(block_size, how=func)
 
-        Returns copy of raster aggregated to smaller resolution, by adding cells.
+        Returns copy of raster aggregated to smaller resolution, using how.
         Default: func=np.ma.mean
         '''
-        raster2 = block_reduce(self.raster, block_size, func=how)
+        # Reduce data on unmasked values only; reduce mask so a block is masked
+        # only when every pixel in it is masked.
+        fill = self.nodata_value if self.nodata_value is not None else 0
+        data2 = block_reduce(self.raster.filled(fill), block_size, func=how)
+        mask2 = block_reduce(np.ma.getmaskarray(self.raster).astype(np.uint8),
+                             block_size, func=np.max).astype(bool)
+        raster2 = np.ma.masked_array(data2, mask=mask2,
+                                     fill_value=self.nodata_value)
         geot = self.geot
         geot = (geot[0], block_size[0] * geot[1], geot[2], geot[3], geot[4],
                 block_size[1] * geot[-1])
-        return GeoRaster(raster2, geot, nodata_value=self.nodata_value,\
-                        projection=self.projection, datatype=self.datatype)
+        return GeoRaster(raster2, geot, nodata_value=self.nodata_value,
+                         projection=self.projection, datatype=self.datatype)
 
     def resize(self, block_size, order=0, mode='constant', cval=False, preserve_range=True):
         '''
@@ -1318,9 +1340,20 @@ def from_file(filename, **kwargs):
     """
     Create a GeoRaster object from a file
     """
+    import warnings
     ndv, xsize, ysize, geot, projection, datatype = get_geo_info(filename, **kwargs)
     data = gdalnumeric.LoadFile(filename, **kwargs)
-    data = np.ma.masked_array(data, mask=data == ndv, fill_value=ndv)
+    if ndv is None:
+        ndv = np.ma.default_fill_value(data)
+        warnings.warn(
+            "No nodata value found in '{}'. Using {} as default. "
+            "Set nodata_value explicitly on the returned GeoRaster to suppress this warning.".format(
+                filename, ndv),
+            UserWarning, stacklevel=2)
+        mask = np.zeros(data.shape, dtype=bool)
+    else:
+        mask = data == ndv
+    data = np.ma.masked_array(data, mask=mask, fill_value=ndv)
     return GeoRaster(data, geot, nodata_value=ndv, projection=projection, datatype=datatype)
 
 # Convert Pandas DataFrame to raster
