@@ -395,3 +395,198 @@ def test_reproject_against_gdal_cea():
     np.testing.assert_allclose(
         gr_arr[valid], ref_arr[valid], rtol=0, atol=1.0,
         err_msg="Pixel values differ by more than 1 unit at valid locations")
+
+# ---------------------------------------------------------------------------
+# Issue #13 — Spatial autocorrelation methods
+#
+# Strategy: build a tiny synthetic 5x5 GeoRaster (no masked cells), compute
+# stats via georasters, then verify against:
+#   (a) direct esda calls on the same array
+#   (b) esda calls on the geopandas representation of the same raster
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(scope='module')
+def tiny_geo():
+    """Synthetic 5x5 GeoRaster, no masked cells, WGS84, for fast SA tests."""
+    import georasters as gr
+    from osgeo import osr
+    # Spatially autocorrelated pattern: gradient + noise
+    data = np.array([
+        [10, 12, 11, 13, 10],
+        [20, 22, 21, 23, 20],
+        [30, 32, 31, 33, 30],
+        [40, 42, 41, 43, 40],
+        [50, 52, 51, 53, 50],
+    ], dtype=np.float32)
+    raster = np.ma.array(data, mask=False)
+    proj = osr.SpatialReference()
+    proj.ImportFromEPSG(4326)
+    return gr.GeoRaster(raster,
+                        (0.0, 1.0, 0.0, 5.0, 0.0, -1.0),
+                        nodata_value=-9999.0,
+                        projection=proj,
+                        datatype='Float32')
+
+# --- helpers ----------------------------------------------------------------
+
+def _direct_weights(nrows, ncols, rook=False):
+    """Build row-standardised lat2W weights matching georasters' raster_weights."""
+    from libpysal.weights import lat2W
+    w = lat2W(nrows, ncols, rook=rook)
+    w.transform = 'r'
+    return w
+
+def _geopandas_queen_weights(gdf):
+    """Build row-standardised Queen weights from the geopandas representation."""
+    from libpysal.weights import Queen
+    w = Queen.from_dataframe(gdf, use_index=False)
+    w.transform = 'r'
+    return w
+
+# --- _compressed ------------------------------------------------------------
+
+def test_compressed_excludes_masked(tiny_geo):
+    """_compressed() returns a plain ndarray of all non-masked values."""
+    valid = tiny_geo._compressed()
+    n_valid = int((~np.ma.getmaskarray(tiny_geo.raster)).sum())
+    assert len(valid) == n_valid
+    assert isinstance(valid, np.ndarray)
+    assert not isinstance(valid, np.ma.MaskedArray)
+
+# --- Moran's I --------------------------------------------------------------
+
+def test_pysal_Moran_matches_direct_esda(tiny_geo):
+    """Moran.I via georasters must equal esda.Moran on the same array/weights."""
+    from esda import Moran
+    tiny_geo.weights = None
+    tiny_geo.pysal_Moran(permutations=0)
+    y = tiny_geo._compressed()
+    w = _direct_weights(5, 5)
+    ref = Moran(y, w, permutations=0)
+    np.testing.assert_almost_equal(tiny_geo.Moran.I, ref.I, decimal=10)
+
+def test_pysal_Moran_matches_geopandas(tiny_geo):
+    """Moran.I via georasters must equal Moran.I computed from geopandas representation."""
+    from esda import Moran
+    tiny_geo.weights = None
+    tiny_geo.pysal_Moran(permutations=0)
+    gdf = tiny_geo.to_geopandas(name='value')
+    w_gp = _geopandas_queen_weights(gdf)
+    ref = Moran(gdf['value'].values.astype(float), w_gp, permutations=0)
+    np.testing.assert_almost_equal(tiny_geo.Moran.I, ref.I, decimal=5)
+
+def test_pysal_Moran_seed_reproducible(tiny_geo):
+    """Same seed must produce identical p_sim across two calls."""
+    tiny_geo.weights = None
+    tiny_geo.pysal_Moran(permutations=19, seed=42)
+    p1 = tiny_geo.Moran.p_sim
+    tiny_geo.weights = None
+    tiny_geo.pysal_Moran(permutations=19, seed=42)
+    p2 = tiny_geo.Moran.p_sim
+    assert p1 == p2
+
+def test_pysal_Moran_seed_does_not_change_I(tiny_geo):
+    """Seeded permutations must not alter the point estimate I."""
+    from esda import Moran
+    tiny_geo.weights = None
+    tiny_geo.pysal_Moran(permutations=0)
+    I_base = tiny_geo.Moran.I
+    tiny_geo.weights = None
+    tiny_geo.pysal_Moran(permutations=19, seed=7)
+    np.testing.assert_almost_equal(tiny_geo.Moran.I, I_base, decimal=10)
+
+# --- Geary's C --------------------------------------------------------------
+
+def test_pysal_Geary_matches_direct_esda(tiny_geo):
+    """Geary.C via georasters must equal esda.Geary on the same array/weights."""
+    from esda import Geary
+    tiny_geo.weights = None
+    tiny_geo.pysal_Geary(permutations=0)
+    y = tiny_geo._compressed()
+    w = _direct_weights(5, 5)
+    ref = Geary(y, w, permutations=0)
+    np.testing.assert_almost_equal(tiny_geo.Geary.C, ref.C, decimal=10)
+
+def test_pysal_Geary_matches_geopandas(tiny_geo):
+    """Geary.C via georasters must equal Geary.C from geopandas representation."""
+    from esda import Geary
+    tiny_geo.weights = None
+    tiny_geo.pysal_Geary(permutations=0)
+    gdf = tiny_geo.to_geopandas(name='value')
+    w_gp = _geopandas_queen_weights(gdf)
+    ref = Geary(gdf['value'].values.astype(float), w_gp, permutations=0)
+    np.testing.assert_almost_equal(tiny_geo.Geary.C, ref.C, decimal=5)
+
+def test_pysal_Geary_seed_reproducible(tiny_geo):
+    """Same seed must produce identical p_sim across two calls."""
+    tiny_geo.weights = None
+    tiny_geo.pysal_Geary(permutations=19, seed=7)
+    p1 = tiny_geo.Geary.p_sim
+    tiny_geo.weights = None
+    tiny_geo.pysal_Geary(permutations=19, seed=7)
+    p2 = tiny_geo.Geary.p_sim
+    assert p1 == p2
+
+# --- G (no seed — esda.G does not support it) ------------------------------
+
+def test_pysal_G_matches_direct_esda(tiny_geo):
+    """G statistic via georasters must equal esda.G on the same array/weights."""
+    from esda import G
+    tiny_geo.weights = None
+    tiny_geo.pysal_G(permutations=0)
+    y = tiny_geo._compressed()
+    w = _direct_weights(5, 5)
+    ref = G(y, w, permutations=0)
+    np.testing.assert_almost_equal(tiny_geo.G.G, ref.G, decimal=10)
+
+# --- Local Moran (seed passed to esda natively) ----------------------------
+
+def test_pysal_Moran_Local_mapped_to_grid(tiny_geo):
+    """Moran_Local.Is must be mapped back as a GeoRaster of the same shape."""
+    tiny_geo.weights = None
+    tiny_geo.pysal_Moran_Local(permutations=0, seed=42)
+    assert hasattr(tiny_geo.Moran_Local, 'Is')
+    assert isinstance(tiny_geo.Moran_Local.Is, type(tiny_geo))
+    assert tiny_geo.Moran_Local.Is.shape == tiny_geo.shape
+
+def test_pysal_Moran_Local_values_match_direct_esda(tiny_geo):
+    """Local Moran Is values must match esda.Moran_Local on same data."""
+    from esda import Moran_Local
+    tiny_geo.weights = None
+    tiny_geo.pysal_Moran_Local(permutations=0, seed=None)
+    y = tiny_geo._compressed()
+    w = _direct_weights(5, 5)
+    ref = Moran_Local(y, w, permutations=0)
+    gr_Is = tiny_geo.Moran_Local.Is._compressed()
+    # float32 raster → ~7 sig figs; decimal=6 matches that precision
+    np.testing.assert_array_almost_equal(gr_Is, ref.Is, decimal=6)
+
+def test_pysal_Moran_Local_seed_accepted(tiny_geo):
+    """Moran_Local seed kwarg must be accepted without error (passed to esda)."""
+    tiny_geo.weights = None
+    tiny_geo.pysal_Moran_Local(permutations=0, seed=42)
+    assert tiny_geo.Moran_Local is not None
+
+# --- Local G (seed passed to esda natively) --------------------------------
+
+def test_pysal_G_Local_mapped_to_grid(tiny_geo):
+    """G_Local.Zs must be mapped back as a GeoRaster of the same shape."""
+    tiny_geo.weights = None
+    tiny_geo.pysal_G_Local(permutations=0, seed=42)
+    assert hasattr(tiny_geo.G_Local, 'Zs')
+    assert isinstance(tiny_geo.G_Local.Zs, type(tiny_geo))
+    assert tiny_geo.G_Local.Zs.shape == tiny_geo.shape
+
+def test_pysal_G_Local_seed_accepted(tiny_geo):
+    """G_Local seed kwarg must be accepted without error (passed to esda)."""
+    tiny_geo.weights = None
+    tiny_geo.pysal_G_Local(permutations=0, seed=3)
+    assert tiny_geo.G_Local is not None
+
+# --- kwargs isolation -------------------------------------------------------
+
+def test_rook_kwarg_does_not_bleed_to_esda(tiny_geo):
+    """rook= is consumed by raster_weights() and must not reach esda constructors."""
+    tiny_geo.weights = None
+    tiny_geo.pysal_Moran(permutations=0, rook=True)
+    assert tiny_geo.Moran is not None
