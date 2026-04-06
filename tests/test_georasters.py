@@ -311,3 +311,87 @@ def test_reproject_nan_nodata_masked():
     assert isinstance(reprojected.raster, np.ma.MaskedArray)
     assert reprojected.raster.mask.any(), \
         "Border fill pixels (nan) should be masked when nodata_value=nan"
+
+def test_reproject_against_gdal_cea():
+    """
+    Ground-truth test for reproject(): compare georasters output against an
+    independent GDAL warp to CEA (ESRI:54034).
+
+    Both pipelines must produce:
+      - the same output shape
+      - the same geotransform (within floating-point tolerance)
+      - pixel values that agree at all valid (non-nodata) locations
+    """
+    import georasters as gr
+    import numpy as np
+    from osgeo import gdal, osr
+    from rasterio.crs import CRS as RioCRS
+    from rasterio.warp import reproject as rio_reproject, Resampling, calculate_default_transform
+    from affine import Affine
+
+    src_path = os.path.join(DATA, 'pre1500.tif')
+    CEA = 'ESRI:54034'
+
+    # ------------------------------------------------------------------
+    # Reference: reproject with raw rasterio (no georasters code path)
+    # ------------------------------------------------------------------
+    src_ds  = gdal.Open(src_path)
+    ndv     = src_ds.GetRasterBand(1).GetNoDataValue()
+    geot    = src_ds.GetGeoTransform()
+    src_srs = osr.SpatialReference()
+    src_srs.ImportFromWkt(src_ds.GetProjectionRef())
+    src_crs = RioCRS.from_wkt(src_srs.ExportToWkt())
+    dst_crs = RioCRS.from_string(CEA)
+
+    xmin, xsize, _, ymax, _, ysize = geot
+    rows, cols = src_ds.RasterYSize, src_ds.RasterXSize
+    ymin  = ymax + ysize * rows
+    xmax  = xmin + xsize * cols
+
+    ref_transform, ref_width, ref_height = calculate_default_transform(
+        src_crs, dst_crs, cols, rows,
+        left=xmin, bottom=ymin, right=xmax, top=ymax)
+
+    import numpy as np
+    src_arr  = src_ds.GetRasterBand(1).ReadAsArray().astype(np.float64)
+    ref_arr  = np.full((ref_height, ref_width), ndv, dtype=np.float64)
+    rio_reproject(
+        src_arr, ref_arr,
+        src_transform=Affine.from_gdal(*geot),
+        src_crs=src_crs,
+        dst_transform=ref_transform,
+        dst_crs=dst_crs,
+        src_nodata=ndv, dst_nodata=ndv,
+        resampling=Resampling.bilinear,
+    )
+    ref_mask = (ref_arr == ndv)
+
+    # ------------------------------------------------------------------
+    # Under test: georasters reproject()
+    # ------------------------------------------------------------------
+    geo          = gr.from_file(src_path)
+    reprojected  = geo.reproject(CEA, resampling='bilinear')
+    gr_arr       = reprojected.raster.filled(ndv)
+    gr_mask      = np.ma.getmaskarray(reprojected.raster)
+
+    # --- shape must match exactly ---
+    assert reprojected.shape == (ref_height, ref_width), (
+        "Shape mismatch: georasters {} vs GDAL reference {}".format(
+            reprojected.shape, (ref_height, ref_width)))
+
+    # --- geotransform must match to sub-metre precision ---
+    ref_geot = ref_transform.to_gdal()
+    for i, (g, r) in enumerate(zip(reprojected.geot, ref_geot)):
+        assert abs(g - r) < 1.0, (
+            "geot[{}] mismatch: georasters {:.4f} vs reference {:.4f}".format(i, g, r))
+
+    # --- masks must agree at every cell ---
+    np.testing.assert_array_equal(
+        gr_mask, ref_mask,
+        err_msg="Nodata mask differs between georasters and GDAL reference")
+
+    # --- valid pixel values must agree within bilinear resampling tolerance ---
+    valid = ~ref_mask
+    np.testing.assert_allclose(
+        gr_arr[valid], ref_arr[valid], rtol=0, atol=1.0,
+        err_msg="Pixel values differ by more than 1 unit at valid locations")
