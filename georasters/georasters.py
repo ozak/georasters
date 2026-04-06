@@ -582,6 +582,7 @@ class GeoRaster(object):
         """
         from rasterio.warp import reproject as rio_reproject, Resampling, calculate_default_transform
         from rasterio.crs import CRS as RioCRS
+        from rasterio.errors import CRSError
 
         resample_map = {
             'nearest':      Resampling.nearest,
@@ -607,7 +608,7 @@ class GeoRaster(object):
             # try EPSG string, then proj4, then WKT
             try:
                 rio_dst_crs = RioCRS.from_string(dst_crs)
-            except Exception:
+            except CRSError:
                 rio_dst_crs = RioCRS.from_wkt(dst_crs)
         elif isinstance(dst_crs, osr.SpatialReference):
             rio_dst_crs = RioCRS.from_wkt(dst_crs.ExportToWkt())
@@ -623,7 +624,15 @@ class GeoRaster(object):
             src_crs, rio_dst_crs, cols, rows,
             left=self.xmin, bottom=self.ymin, right=self.xmax, top=self.ymax)
 
-        src_arr = self.raster.filled(ndv) if ndv is not None else self.raster.filled(0)
+        # When ndv is nan it cannot fill integer arrays; use a type-safe sentinel instead.
+        # rasterio still receives nan as src_nodata so border handling is correct.
+        if ndv is not None:
+            try:
+                src_arr = self.raster.filled(ndv)
+            except (TypeError, ValueError):
+                src_arr = self.raster.filled(np.ma.default_fill_value(self.raster))
+        else:
+            src_arr = self.raster.filled(0)
         dst_arr = np.empty((dst_height, dst_width), dtype=src_arr.dtype)
         if ndv is not None:
             dst_arr[:] = ndv
@@ -645,8 +654,12 @@ class GeoRaster(object):
         new_proj.ImportFromWkt(rio_dst_crs.to_wkt())
 
         new_geot = dst_transform.to_gdal()
-        new_raster = np.ma.masked_equal(dst_arr, ndv) if ndv is not None \
-            else np.ma.masked_array(dst_arr)
+        if ndv is not None and np.isnan(ndv):
+            new_raster = np.ma.masked_invalid(dst_arr)
+        elif ndv is not None:
+            new_raster = np.ma.masked_equal(dst_arr, ndv)
+        else:
+            new_raster = np.ma.masked_array(dst_arr)
 
         return GeoRaster(new_raster, new_geot, nodata_value=ndv,
                          projection=new_proj, datatype=self.datatype)

@@ -296,3 +296,18 @@ def test_reproject_roundtrip_shape():
     data = gr.from_file(os.path.join(DATA, 'pre1500.tif'))
     reprojected = data.reproject(3857)
     assert reprojected.shape[0] > 0 and reprojected.shape[1] > 0
+
+def test_reproject_nan_nodata_masked():
+    """reproject() must correctly mask border pixels when nodata_value is nan (float raster)."""
+    import georasters as gr
+    import numpy as np
+    data = gr.from_file(os.path.join(DATA, 'pre1500.tif'))
+    # Cast to float so nan is a valid fill value, then set nodata to nan
+    float_raster = np.ma.array(data.raster.data.astype(np.float64),
+                               mask=data.raster.mask)
+    geo = gr.GeoRaster(float_raster, data.geot, nodata_value=np.nan,
+                       projection=data.projection, datatype=data.datatype)
+    reprojected = geo.reproject(3857)
+    assert isinstance(reprojected.raster, np.ma.MaskedArray)
+    assert reprojected.raster.mask.any(), \
+        "Border fill pixels (nan) should be masked when nodata_value=nan"
