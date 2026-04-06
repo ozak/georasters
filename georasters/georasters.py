@@ -48,18 +48,8 @@ from affine import Affine
 from rasterstats import zonal_stats
 import rasterio
 from shapely.geometry import shape
-import pysal
-if pysal.__version__.startswith('2.1'):
-    from pysal.explore.esda import G as pysal_G
-    from pysal.explore.esda import G_Local as pysal_G_Local
-    from pysal.explore.esda import Gamma as pysal_Gamma
-    from pysal.explore.esda import Join_Counts as pysal_Join_Counts
-    from pysal.explore.esda import Moran as pysal_Moran
-    from pysal.explore.esda import Moran_Local as pysal_Moran_Local
-    from pysal.explore.esda import Geary as pysal_Geary
-    from pysal.lib.weights import lat2W as pysal_lat2W
-    from pysal.lib.weights import W as pysal_W
-elif pysal.__version__.startswith('2') and pysal.__version__.startswith('2.1')==False:
+try:
+    # Modern pysal (>= 2.2): standalone esda + libpysal packages
     from esda import G as pysal_G
     from esda import G_Local as pysal_G_Local
     from esda import Gamma as pysal_Gamma
@@ -69,15 +59,28 @@ elif pysal.__version__.startswith('2') and pysal.__version__.startswith('2.1')==
     from esda import Geary as pysal_Geary
     from libpysal.weights import lat2W as pysal_lat2W
     from libpysal.weights import W as pysal_W
-else:
-    from pysal import G as pysal_G
-    from pysal import G_Local as pysal_G_Local
-    from pysal import Gamma as pysal_Gamma
-    from pysal import Join_Counts as pysal_Join_Counts
-    from pysal import Moran as pysal_Moran
-    from pysal import Moran_Local as pysal_Moran_Local
-    from pysal import Geary as pysal_Geary
-    from pysal import lat2W as pysal_lat2W
+except ImportError:
+    try:
+        # pysal 2.1 monorepo layout
+        from pysal.explore.esda import G as pysal_G
+        from pysal.explore.esda import G_Local as pysal_G_Local
+        from pysal.explore.esda import Gamma as pysal_Gamma
+        from pysal.explore.esda import Join_Counts as pysal_Join_Counts
+        from pysal.explore.esda import Moran as pysal_Moran
+        from pysal.explore.esda import Moran_Local as pysal_Moran_Local
+        from pysal.explore.esda import Geary as pysal_Geary
+        from pysal.lib.weights import lat2W as pysal_lat2W
+        from pysal.lib.weights import W as pysal_W
+    except ImportError:
+        import warnings
+        warnings.warn(
+            "Could not import spatial autocorrelation functions. "
+            "Install 'esda' and 'libpysal' (pip install esda libpysal) "
+            "to use pysal_Moran, pysal_Geary, and related methods.",
+            ImportWarning, stacklevel=2)
+        pysal_G = pysal_G_Local = pysal_Gamma = pysal_Join_Counts = None
+        pysal_Moran = pysal_Moran_Local = pysal_Geary = None
+        pysal_lat2W = pysal_W = None
     from pysal import W as pysal_W
 
 # Function to read the original file's projection:
@@ -1149,134 +1152,223 @@ class GeoRaster(object):
             self.weights = raster_weights(self.raster, **kwargs)
         pass
 
-    def pysal_G(self, **kwargs):
+    def _weights_kwargs(self, kwargs):
+        """Split kwargs into weights-only and esda-only sets to avoid cross-contamination."""
+        weights_keys = {'rook', 'transform', 'silence_warnings', 'id_variable',
+                        'id_order', 'num_cores'}
+        w_kwargs   = {k: v for k, v in kwargs.items() if k in weights_keys}
+        esda_kwargs = {k: v for k, v in kwargs.items() if k not in weights_keys}
+        return w_kwargs, esda_kwargs
+
+    def _compressed(self):
+        """Return flattened, non-masked values as a plain numpy array."""
+        return np.asarray(self.raster.flatten().compressed())
+
+    def pysal_G(self, permutations=999, **kwargs):
         """
-        Compute Getis and Ord’s G for GeoRaster
+        Compute Getis and Ord's G for GeoRaster.
 
         Usage:
-        geo.pysal_G(permutations = 1000, rook=True)
+            geo.pysal_G(permutations=999, rook=False)
 
-        arguments passed to raster_weights() and pysal_G
-        See help(gr.raster_weights), help(pysal_G) for options
+        Parameters
+        ----------
+        permutations : int
+            Number of random permutations for significance testing.
+        **kwargs
+            rook, transform passed to raster_weights(); remaining kwargs
+            forwarded to esda.G.
+
+        Note: esda.G does not support a random seed. Use Moran or Geary
+        if reproducible permutation inference is required.
         """
+        w_kwargs, esda_kwargs = self._weights_kwargs(kwargs)
         if self.weights is None:
-            self.raster_weights(**kwargs)
-        rasterf = self.raster.flatten()
-        rasterf = rasterf[rasterf.mask==False]
-        self.G = pysal_G(rasterf, self.weights, **kwargs)
-    pass
+            self.raster_weights(**w_kwargs)
+        self.G = pysal_G(self._compressed(), self.weights,
+                         permutations=permutations, **esda_kwargs)
 
-    def pysal_Gamma(self, **kwargs):
+    def pysal_Gamma(self, permutations=999, **kwargs):
         """
-        Compute Gamma Index of Spatial Autocorrelation for GeoRaster
+        Compute Gamma Index of Spatial Autocorrelation for GeoRaster.
 
         Usage:
-        geo.pysal_Gamma(permutations = 1000, rook=True, operation='c')
+            geo.pysal_Gamma(permutations=999, operation='c', rook=False)
 
-        arguments passed to raster_weights() and pysal.Gamma
-        See help(gr.raster_weights), help(pysal.Gamma) for options
+        Parameters
+        ----------
+        permutations : int
+            Number of random permutations for significance testing.
+        **kwargs
+            rook, transform passed to raster_weights(); operation, standardize
+            forwarded to esda.Gamma.
         """
+        w_kwargs, esda_kwargs = self._weights_kwargs(kwargs)
         if self.weights is None:
-            self.raster_weights(**kwargs)
-        rasterf = self.raster.flatten()
-        rasterf = rasterf[rasterf.mask==False]
-        self.Gamma = pysal_Gamma(rasterf, self.weights, **kwargs)
-    pass
+            self.raster_weights(**w_kwargs)
+        self.Gamma = pysal_Gamma(self._compressed(), self.weights,
+                                 permutations=permutations, **esda_kwargs)
 
-    def pysal_Join_Counts(self, **kwargs):
+    def pysal_Join_Counts(self, permutations=999, **kwargs):
         """
-        Compute join count statistics for GeoRaster
+        Compute join count statistics for GeoRaster.
 
         Usage:
-        geo.pysal_Join_Counts(permutations = 1000, rook=True)
+            geo.pysal_Join_Counts(permutations=999, rook=False)
 
-        arguments passed to raster_weights() and pysal.Join_Counts
-        See help(gr.raster_weights), help(pysal.Join_Counts) for options
+        Parameters
+        ----------
+        permutations : int
+            Number of random permutations for significance testing.
+        **kwargs
+            rook, transform passed to raster_weights().
         """
+        w_kwargs, esda_kwargs = self._weights_kwargs(kwargs)
         if self.weights is None:
-            self.raster_weights(**kwargs)
-        rasterf = self.raster.flatten()
-        rasterf = rasterf[rasterf.mask==False]
-        self.Join_Counts = pysal_Join_Counts(rasterf, self.weights, **kwargs)
-    pass
+            self.raster_weights(**w_kwargs)
+        self.Join_Counts = pysal_Join_Counts(self._compressed(), self.weights,
+                                             permutations=permutations, **esda_kwargs)
 
-    def pysal_Moran(self, **kwargs):
+    def pysal_Moran(self, permutations=999, seed=None, **kwargs):
         """
-        Compute Moran's I measure of global spatial autocorrelation for GeoRaster
+        Compute Moran's I measure of global spatial autocorrelation for GeoRaster.
 
         Usage:
-        geo.pysal_Moran(permutations = 1000, rook=True)
+            geo.pysal_Moran(permutations=999, seed=42, rook=False)
 
-        arguments passed to raster_weights() and pysal.Moran
-        See help(gr.raster_weights), help(pysal.Moran) for options
+        Parameters
+        ----------
+        permutations : int
+            Number of random permutations for significance testing.
+        seed : int or None
+            Random seed for reproducible permutation inference.
+        **kwargs
+            rook, transform passed to raster_weights(); transformation,
+            two_tailed forwarded to esda.Moran.
         """
+        w_kwargs, esda_kwargs = self._weights_kwargs(kwargs)
         if self.weights is None:
-            self.raster_weights(**kwargs)
-        rasterf = self.raster.flatten()
-        rasterf = rasterf[rasterf.mask==False]
-        self.Moran = pysal_Moran(rasterf, self.weights, **kwargs)
-    pass
+            self.raster_weights(**w_kwargs)
+        self.Moran = pysal_Moran(self._compressed(), self.weights,
+                                 permutations=permutations, **esda_kwargs)
+        if seed is not None and permutations > 0:
+            import numpy.random as npr
+            rng = npr.default_rng(seed)
+            y = self._compressed()
+            sims = np.array([
+                pysal_Moran(rng.permutation(y), self.weights,
+                            permutations=0, **esda_kwargs).I
+                for _ in range(permutations)
+            ])
+            self.Moran.sim = sims
+            self.Moran.p_norm = None  # seeded path uses sim-based p-values
+            above = (sims >= self.Moran.I).sum()
+            self.Moran.p_sim = min(above, permutations - above) / permutations
 
-    def pysal_Geary(self, **kwargs):
+    def pysal_Geary(self, permutations=999, seed=None, **kwargs):
         """
-        Compute Geary’s C for GeoRaster
+        Compute Geary's C for GeoRaster.
 
         Usage:
-        geo.pysal_C(permutations = 1000, rook=True)
+            geo.pysal_Geary(permutations=999, seed=42, rook=False)
 
-        arguments passed to raster_weights() and pysal.Geary
-        See help(gr.raster_weights), help(pysal.Geary) for options
+        Parameters
+        ----------
+        permutations : int
+            Number of random permutations for significance testing.
+        seed : int or None
+            Random seed for reproducible permutation inference.
+        **kwargs
+            rook, transform passed to raster_weights(); transformation
+            forwarded to esda.Geary.
         """
+        w_kwargs, esda_kwargs = self._weights_kwargs(kwargs)
         if self.weights is None:
-            self.raster_weights(**kwargs)
-        rasterf = self.raster.flatten()
-        rasterf = rasterf[rasterf.mask==False]
-        self.Geary = pysal_Geary(rasterf, self.weights, **kwargs)
-    pass
+            self.raster_weights(**w_kwargs)
+        self.Geary = pysal_Geary(self._compressed(), self.weights,
+                                 permutations=permutations, **esda_kwargs)
+        if seed is not None and permutations > 0:
+            import numpy.random as npr
+            rng = npr.default_rng(seed)
+            y = self._compressed()
+            sims = np.array([
+                pysal_Geary(rng.permutation(y), self.weights,
+                            permutations=0, **esda_kwargs).C
+                for _ in range(permutations)
+            ])
+            self.Geary.sim = sims
+            above = (sims >= self.Geary.C).sum()
+            self.Geary.p_sim = min(above, permutations - above) / permutations
 
-    def pysal_Moran_Local(self, **kwargs):
+    def pysal_Moran_Local(self, permutations=999, seed=None, n_jobs=1, **kwargs):
         """
-        Compute Local Moran's I measure of local spatial autocorrelation for GeoRaster
+        Compute Local Moran's I (LISA) for GeoRaster and map results back
+        onto the raster grid.
 
         Usage:
-        geo.pysal_Moran_Local(permutations = 1000, rook=True)
+            geo.pysal_Moran_Local(permutations=999, seed=42, n_jobs=1, rook=False)
 
-        arguments passed to raster_weights() and pysal.Moran_Local
-        See help(gr.raster_weights), help(pysal.Moran_Local) for options
+        Parameters
+        ----------
+        permutations : int
+            Number of random permutations for significance testing.
+        seed : int or None
+            Random seed for reproducible permutation inference.
+        n_jobs : int
+            Number of cores to use for permutation inference (default 1).
+            Pass -1 to use all available cores.
+        **kwargs
+            rook, transform passed to raster_weights(); transformation,
+            geoda_quads forwarded to esda.Moran_Local.
         """
+        w_kwargs, esda_kwargs = self._weights_kwargs(kwargs)
         if self.weights is None:
-            self.raster_weights(**kwargs)
-        rasterf = self.raster.flatten()
-        rasterf = rasterf[rasterf.mask==False]
-        self.Moran_Local = pysal_Moran_Local(rasterf, self.weights, **kwargs)
-        for i in self.Moran_Local.__dict__.keys():
-            if (isinstance(getattr(self.Moran_Local, i), np.ma.masked_array) or
-                (isinstance(getattr(self.Moran_Local, i), np.ndarray)) and
-                 len(getattr(self.Moran_Local, i).shape) == 1):
-                setattr(self.Moran_Local, i, self.map_vector(getattr(self.Moran_Local, i)))
-    pass
+            self.raster_weights(**w_kwargs)
+        self.Moran_Local = pysal_Moran_Local(
+            self._compressed(), self.weights,
+            permutations=permutations, seed=seed, n_jobs=n_jobs, **esda_kwargs)
+        for attr in list(self.Moran_Local.__dict__.keys()):
+            val = getattr(self.Moran_Local, attr)
+            if (isinstance(val, (np.ma.MaskedArray, np.ndarray)) and
+                    val.ndim == 1 and len(val) == len(self._compressed())):
+                setattr(self.Moran_Local, attr, self.map_vector(val))
 
-    def pysal_G_Local(self, star=False, **kwargs):
+    def pysal_G_Local(self, permutations=999, seed=None, star=False, n_jobs=1, **kwargs):
         """
         Compute Local G or G* measures of local spatial autocorrelation for GeoRaster
+        and map results back onto the raster grid.
 
         Usage:
-        geo.pysal_Moran(permutations = 1000, rook=True)
+            geo.pysal_G_Local(permutations=999, seed=42, star=False, n_jobs=1, rook=False)
 
-        arguments passed to raster_weights() and pysal.G_Local
-        See help(gr.raster_weights), help(pysal.G_Local) for options
+        Parameters
+        ----------
+        permutations : int
+            Number of random permutations for significance testing.
+        seed : int or None
+            Random seed for reproducible permutation inference.
+        star : bool
+            If True, compute G* (includes focal observation). Default False.
+        n_jobs : int
+            Number of cores to use for permutation inference (default 1).
+            esda.G_Local defaults to -1 (all cores); we default to 1 to
+            avoid unintended resource exhaustion.
+            Pass -1 to use all available cores.
+        **kwargs
+            rook, transform passed to raster_weights().
         """
+        w_kwargs, esda_kwargs = self._weights_kwargs(kwargs)
         if self.weights is None:
-            self.raster_weights(**kwargs)
-        rasterf = self.raster.flatten()
-        rasterf = rasterf[rasterf.mask==False]
-        self.G_Local = pysal_G_Local(rasterf, self.weights, **kwargs)
-        for i in self.G_Local.__dict__.keys():
-            if (isinstance(getattr(self.G_Local, i), np.ma.masked_array) or
-                (isinstance(getattr(self.G_Local, i), np.ndarray)) and
-                 len(getattr(self.G_Local, i).shape) == 1):
-                setattr(self.G_Local, i, self.map_vector(getattr(self.G_Local, i)))
-    pass
+            self.raster_weights(**w_kwargs)
+        self.G_Local = pysal_G_Local(
+            self._compressed(), self.weights,
+            permutations=permutations, seed=seed, star=star, n_jobs=n_jobs,
+            **esda_kwargs)
+        for attr in list(self.G_Local.__dict__.keys()):
+            val = getattr(self.G_Local, attr)
+            if (isinstance(val, (np.ma.MaskedArray, np.ndarray)) and
+                    val.ndim == 1 and len(val) == len(self._compressed())):
+                setattr(self.G_Local, attr, self.map_vector(val))
 
     def map_vector(self, x, **kvars):
         """
