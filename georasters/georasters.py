@@ -946,26 +946,39 @@ class GeoRaster(object):
 
         Returns copy of raster aggregated to smaller resolution, by adding cells.
         '''
-        raster2 = block_reduce(self.raster, block_size, func=np.ma.sum)
+        # Reduce data on unmasked values only; reduce mask so a block is masked
+        # only when every pixel in it is masked.
+        data2 = block_reduce(self.raster.filled(0), block_size, func=np.sum)
+        mask2 = block_reduce(np.ma.getmaskarray(self.raster).astype(np.uint8),
+                             block_size, func=np.max).astype(bool)
+        raster2 = np.ma.masked_array(data2, mask=mask2,
+                                     fill_value=self.nodata_value)
         geot = self.geot
         geot = (geot[0], block_size[0] * geot[1], geot[2], geot[3], geot[4],
                 block_size[1] * geot[-1])
-        return GeoRaster(raster2, geot, nodata_value=self.nodata_value,\
-                        projection=self.projection, datatype=self.datatype)
+        return GeoRaster(raster2, geot, nodata_value=self.nodata_value,
+                         projection=self.projection, datatype=self.datatype)
 
     def block_reduce(self, block_size, how=np.ma.mean):
         '''
         geo.block_reduce(block_size, how=func)
 
-        Returns copy of raster aggregated to smaller resolution, by adding cells.
+        Returns copy of raster aggregated to smaller resolution, using how.
         Default: func=np.ma.mean
         '''
-        raster2 = block_reduce(self.raster, block_size, func=how)
+        # Reduce data on unmasked values only; reduce mask so a block is masked
+        # only when every pixel in it is masked.
+        fill = self.nodata_value if self.nodata_value is not None else 0
+        data2 = block_reduce(self.raster.filled(fill), block_size, func=how)
+        mask2 = block_reduce(np.ma.getmaskarray(self.raster).astype(np.uint8),
+                             block_size, func=np.max).astype(bool)
+        raster2 = np.ma.masked_array(data2, mask=mask2,
+                                     fill_value=self.nodata_value)
         geot = self.geot
         geot = (geot[0], block_size[0] * geot[1], geot[2], geot[3], geot[4],
                 block_size[1] * geot[-1])
-        return GeoRaster(raster2, geot, nodata_value=self.nodata_value,\
-                        projection=self.projection, datatype=self.datatype)
+        return GeoRaster(raster2, geot, nodata_value=self.nodata_value,
+                         projection=self.projection, datatype=self.datatype)
 
     def resize(self, block_size, order=0, mode='constant', cval=False, preserve_range=True):
         '''

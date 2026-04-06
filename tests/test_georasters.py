@@ -134,6 +134,52 @@ def test_stats10():
     data = gr.from_file(raster)
     assert data.count() == data.raster.count()
 
+def test_aggregate_preserves_mask():
+    """Issues #72, #51: aggregate() must propagate the mask to the reduced raster."""
+    import georasters as gr
+    import numpy as np
+    # 4x4 raster with a 2x2 block of masked values in the top-left
+    data = np.ma.array(
+        [[1, 2, 3, 4],
+         [5, 6, 7, 8],
+         [9, 10, 11, 12],
+         [13, 14, 15, 16]],
+        mask=[[True, True, False, False],
+              [True, True, False, False],
+              [False, False, False, False],
+              [False, False, False, False]],
+        dtype=float
+    )
+    geo = gr.GeoRaster(data, (0.0, 1.0, 0.0, 4.0, 0.0, -1.0), nodata_value=-9999.0)
+    agg = geo.aggregate((2, 2))
+    # Result should be 2x2; top-left block was all masked → still masked
+    assert agg.raster.shape == (2, 2)
+    assert agg.raster.mask[0, 0], "Top-left block (all masked) should remain masked"
+    assert not agg.raster.mask[0, 1], "Top-right block (no masked pixels) should be unmasked"
+    assert not agg.raster.mask[1, 0], "Bottom-left block should be unmasked"
+    assert not agg.raster.mask[1, 1], "Bottom-right block should be unmasked"
+
+def test_block_reduce_preserves_mask():
+    """Issues #72, #51: block_reduce() must propagate the mask to the reduced raster."""
+    import georasters as gr
+    import numpy as np
+    data = np.ma.array(
+        [[1, 2, 3, 4],
+         [5, 6, 7, 8],
+         [9, 10, 11, 12],
+         [13, 14, 15, 16]],
+        mask=[[True, True, False, False],
+              [True, True, False, False],
+              [False, False, False, False],
+              [False, False, False, False]],
+        dtype=float
+    )
+    geo = gr.GeoRaster(data, (0.0, 1.0, 0.0, 4.0, 0.0, -1.0), nodata_value=-9999.0)
+    reduced = geo.block_reduce((2, 2), how=np.mean)
+    assert reduced.raster.shape == (2, 2)
+    assert reduced.raster.mask[0, 0], "Top-left block (all masked) should remain masked"
+    assert not reduced.raster.mask[0, 1], "Top-right block should be unmasked"
+
 def test_nodata_none_roundtrip(tmp_path):
     """Issues #47, #34: opening and immediately saving a raster with nodata=None should not crash."""
     import georasters as gr
