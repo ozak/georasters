@@ -223,3 +223,76 @@ def test_to_tiff_no_duplicate_extension(tmp_path):
     out2 = str(tmp_path / 'output2')
     data.to_tiff(out2)
     assert (tmp_path / 'output2.tif').exists(), "output2.tif should exist"
+
+# ---------------------------------------------------------------------------
+# Issue #4 — reproject
+# ---------------------------------------------------------------------------
+
+def test_reproject_changes_crs():
+    """Issue #4: reproject() should return a GeoRaster in the requested CRS."""
+    import georasters as gr
+    data = gr.from_file(os.path.join(DATA, 'pre1500.tif'))
+    # Source is WGS84 (EPSG:4326); reproject to Web Mercator (EPSG:3857)
+    reprojected = data.reproject(3857)
+    src_wkt  = data.projection.ExportToProj4()
+    dst_wkt  = reprojected.projection.ExportToProj4()
+    assert src_wkt != dst_wkt, "Projection should have changed"
+    assert 'merc' in dst_wkt.lower() or '3857' in reprojected.projection.ExportToWkt(), \
+        "Output should be Web Mercator"
+
+def test_reproject_epsg_string():
+    """reproject() should accept 'EPSG:NNNN' strings."""
+    import georasters as gr
+    data = gr.from_file(os.path.join(DATA, 'pre1500.tif'))
+    reprojected = data.reproject('EPSG:3857')
+    assert 'merc' in reprojected.projection.ExportToProj4().lower() or \
+        '3857' in reprojected.projection.ExportToWkt()
+
+def test_reproject_preserves_nodata():
+    """reproject() must carry the nodata value through to the output."""
+    import georasters as gr
+    data = gr.from_file(os.path.join(DATA, 'pre1500.tif'))
+    reprojected = data.reproject(3857)
+    assert reprojected.nodata_value == data.nodata_value
+
+def test_reproject_output_is_masked():
+    """reproject() output raster should be a masked array with some masked cells."""
+    import georasters as gr
+    data = gr.from_file(os.path.join(DATA, 'pre1500.tif'))
+    reprojected = data.reproject(3857)
+    assert isinstance(reprojected.raster, np.ma.MaskedArray)
+    assert reprojected.raster.mask.any(), "Reprojected raster should have some masked (nodata) cells"
+
+def test_reproject_bounds_are_valid():
+    """reproject() output should have a valid, non-zero spatial extent."""
+    import georasters as gr
+    data = gr.from_file(os.path.join(DATA, 'pre1500.tif'))
+    reprojected = data.reproject(3857)
+    assert reprojected.xmin < reprojected.xmax
+    assert reprojected.ymin < reprojected.ymax
+
+def test_reproject_invalid_resampling_raises():
+    """reproject() should raise ValueError for unknown resampling method."""
+    import georasters as gr
+    import pytest
+    data = gr.from_file(os.path.join(DATA, 'pre1500.tif'))
+    with pytest.raises(ValueError):
+        data.reproject(3857, resampling='bogus')
+
+def test_reproject_osr_input():
+    """reproject() should accept an osr.SpatialReference as dst_crs."""
+    import georasters as gr
+    from osgeo import osr
+    data = gr.from_file(os.path.join(DATA, 'pre1500.tif'))
+    dst = osr.SpatialReference()
+    dst.ImportFromEPSG(3857)
+    reprojected = data.reproject(dst)
+    assert 'merc' in reprojected.projection.ExportToProj4().lower() or \
+        '3857' in reprojected.projection.ExportToWkt()
+
+def test_reproject_roundtrip_shape():
+    """reproject() result should have non-trivial shape matching expected output dims."""
+    import georasters as gr
+    data = gr.from_file(os.path.join(DATA, 'pre1500.tif'))
+    reprojected = data.reproject(3857)
+    assert reprojected.shape[0] > 0 and reprojected.shape[1] > 0
