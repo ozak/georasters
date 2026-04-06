@@ -439,7 +439,7 @@ def _direct_weights(nrows, ncols, rook=False):
 def _geopandas_queen_weights(gdf):
     """Build row-standardised Queen weights from the geopandas representation."""
     from libpysal.weights import Queen
-    w = Queen.from_dataframe(gdf)
+    w = Queen.from_dataframe(gdf, use_index=False)
     w.transform = 'r'
     return w
 

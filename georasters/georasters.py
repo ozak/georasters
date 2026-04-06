@@ -81,7 +81,6 @@ except ImportError:
         pysal_G = pysal_G_Local = pysal_Gamma = pysal_Join_Counts = None
         pysal_Moran = pysal_Moran_Local = pysal_Geary = None
         pysal_lat2W = pysal_W = None
-    from pysal import W as pysal_W
 
 # Function to read the original file's projection:
 def get_geo_info(filename, band=1):
@@ -1249,9 +1248,10 @@ class GeoRaster(object):
         w_kwargs, esda_kwargs = self._weights_kwargs(kwargs)
         if self.weights is None:
             self.raster_weights(**w_kwargs)
-        self.Moran = pysal_Moran(self._compressed(), self.weights,
-                                 permutations=permutations, **esda_kwargs)
         if seed is not None and permutations > 0:
+            # Get point estimate only, then run seeded permutations separately
+            self.Moran = pysal_Moran(self._compressed(), self.weights,
+                                     permutations=0, **esda_kwargs)
             import numpy.random as npr
             rng = npr.default_rng(seed)
             y = self._compressed()
@@ -1264,6 +1264,9 @@ class GeoRaster(object):
             self.Moran.p_norm = None  # seeded path uses sim-based p-values
             above = (sims >= self.Moran.I).sum()
             self.Moran.p_sim = min(above, permutations - above) / permutations
+        else:
+            self.Moran = pysal_Moran(self._compressed(), self.weights,
+                                     permutations=permutations, **esda_kwargs)
 
     def pysal_Geary(self, permutations=999, seed=None, **kwargs):
         """
@@ -1285,9 +1288,10 @@ class GeoRaster(object):
         w_kwargs, esda_kwargs = self._weights_kwargs(kwargs)
         if self.weights is None:
             self.raster_weights(**w_kwargs)
-        self.Geary = pysal_Geary(self._compressed(), self.weights,
-                                 permutations=permutations, **esda_kwargs)
         if seed is not None and permutations > 0:
+            # Get point estimate only, then run seeded permutations separately
+            self.Geary = pysal_Geary(self._compressed(), self.weights,
+                                     permutations=0, **esda_kwargs)
             import numpy.random as npr
             rng = npr.default_rng(seed)
             y = self._compressed()
@@ -1299,6 +1303,9 @@ class GeoRaster(object):
             self.Geary.sim = sims
             above = (sims >= self.Geary.C).sum()
             self.Geary.p_sim = min(above, permutations - above) / permutations
+        else:
+            self.Geary = pysal_Geary(self._compressed(), self.weights,
+                                     permutations=permutations, **esda_kwargs)
 
     def pysal_Moran_Local(self, permutations=999, seed=None, n_jobs=1, **kwargs):
         """
