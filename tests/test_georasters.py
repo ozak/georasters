@@ -134,6 +134,36 @@ def test_stats10():
     data = gr.from_file(raster)
     assert data.count() == data.raster.count()
 
+def test_nodata_none_roundtrip(tmp_path):
+    """Issues #47, #34: opening and immediately saving a raster with nodata=None should not crash."""
+    import georasters as gr
+    import warnings
+    from osgeo import gdal, gdal_array
+    # Build a small raster with no nodata value set (simulate files without NDV)
+    driver = gdal.GetDriverByName('GTiff')
+    path = str(tmp_path / 'no_ndv.tif')
+    ds = driver.Create(path, 4, 4, 1, gdal.GDT_Int16)
+    ds.SetGeoTransform((0.0, 1.0, 0.0, 4.0, 0.0, -1.0))
+    from osgeo import osr
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    ds.SetProjection(srs.ExportToWkt())
+    import numpy as np
+    ds.GetRasterBand(1).WriteArray(np.arange(16, dtype=np.int16).reshape(4, 4))
+    # Intentionally do NOT call SetNoDataValue
+    ds.FlushCache()
+    ds = None
+    # Load — should warn but not crash
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        data = gr.from_file(path)
+        assert any(issubclass(warning.category, UserWarning) for warning in w), \
+            "Expected a UserWarning about missing nodata value"
+    # Save — should not crash
+    out = str(tmp_path / 'saved.tif')
+    data.to_tiff(out)
+    assert (tmp_path / 'saved.tif').exists()
+
 def test_to_tiff_no_duplicate_extension(tmp_path):
     """Issue #46: to_tiff should not double-append .tif extension."""
     import georasters as gr

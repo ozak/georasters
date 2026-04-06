@@ -189,7 +189,8 @@ def create_geotiff(name, Array, driver, ndv, xsize, ysize, geot, projection, dat
         _base = _base[:-4]
     newfilename = _base + '.tif'
     # Set nans to the original No Data Value
-    Array[np.isnan(Array)] = ndv
+    if ndv is not None:
+        Array[np.isnan(Array)] = ndv
     # Set up the dataset
     DataSet = driver.Create(newfilename, xsize, ysize, 1, datatype)
     # the '1' is for band 1.
@@ -197,7 +198,8 @@ def create_geotiff(name, Array, driver, ndv, xsize, ysize, geot, projection, dat
     DataSet.SetProjection(projection.ExportToWkt())
     # Write the array
     DataSet.GetRasterBand(band).WriteArray(Array)
-    DataSet.GetRasterBand(band).SetNoDataValue(ndv)
+    if ndv is not None:
+        DataSet.GetRasterBand(band).SetNoDataValue(ndv)
     return newfilename
 
 # Function to aggregate and align rasters
@@ -547,7 +549,8 @@ class GeoRaster(object):
                 else:
                     self.raster = self.raster.astype(np.float64)
                     self.datatype = gdal_array.NumericTypeCodeToGDALTypeCode(self.raster.data.dtype)
-        self.raster.data[self.raster.mask] = self.nodata_value
+        if self.nodata_value is not None:
+            self.raster.data[self.raster.mask] = self.nodata_value
         create_geotiff(filename, self.raster, gdal.GetDriverByName('GTiff'), self.nodata_value,
                        self.shape[1], self.shape[0], self.geot, self.projection, self.datatype)
 
@@ -1324,9 +1327,20 @@ def from_file(filename, **kwargs):
     """
     Create a GeoRaster object from a file
     """
+    import warnings
     ndv, xsize, ysize, geot, projection, datatype = get_geo_info(filename, **kwargs)
     data = gdalnumeric.LoadFile(filename, **kwargs)
-    data = np.ma.masked_array(data, mask=data == ndv, fill_value=ndv)
+    if ndv is None:
+        ndv = np.ma.default_fill_value(data)
+        warnings.warn(
+            "No nodata value found in '{}'. Using {} as default. "
+            "Set nodata_value explicitly on the returned GeoRaster to suppress this warning.".format(
+                filename, ndv),
+            UserWarning, stacklevel=2)
+        mask = np.zeros(data.shape, dtype=bool)
+    else:
+        mask = data == ndv
+    data = np.ma.masked_array(data, mask=mask, fill_value=ndv)
     return GeoRaster(data, geot, nodata_value=ndv, projection=projection, datatype=datatype)
 
 # Convert Pandas DataFrame to raster
