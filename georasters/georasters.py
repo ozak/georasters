@@ -554,6 +554,116 @@ class GeoRaster(object):
         create_geotiff(filename, self.raster, gdal.GetDriverByName('GTiff'), self.nodata_value,
                        self.shape[1], self.shape[0], self.geot, self.projection, self.datatype)
 
+    def reproject(self, dst_crs, resampling='bilinear', nodata_value=None):
+        """
+        Reproject GeoRaster to a different coordinate reference system.
+
+        Usage:
+            reprojected = geo.reproject(dst_crs)
+            reprojected = geo.reproject(4326)
+            reprojected = geo.reproject('EPSG:32632')
+            reprojected = geo.reproject('+proj=utm +zone=32 +datum=WGS84')
+
+        Parameters
+        ----------
+        dst_crs : int, str, or rasterio.crs.CRS
+            Target CRS. Accepts EPSG integer (e.g. 4326), EPSG string
+            ('EPSG:4326'), proj4 string, WKT string, or a rasterio CRS object.
+        resampling : str, optional
+            Resampling method. One of 'nearest', 'bilinear', 'cubic',
+            'cubic_spline', 'lanczos', 'average', 'mode'. Default 'bilinear'.
+        nodata_value : scalar, optional
+            Override nodata value for the output. Defaults to self.nodata_value.
+
+        Returns
+        -------
+        GeoRaster
+            New GeoRaster in the target CRS.
+        """
+        from rasterio.warp import reproject as rio_reproject, Resampling, calculate_default_transform
+        from rasterio.crs import CRS as RioCRS
+        from rasterio.errors import CRSError
+
+        resample_map = {
+            'nearest':      Resampling.nearest,
+            'bilinear':     Resampling.bilinear,
+            'cubic':        Resampling.cubic,
+            'cubic_spline': Resampling.cubic_spline,
+            'lanczos':      Resampling.lanczos,
+            'average':      Resampling.average,
+            'mode':         Resampling.mode,
+        }
+        if resampling not in resample_map:
+            raise ValueError("resampling must be one of: {}".format(', '.join(resample_map)))
+
+        # --- build source CRS as rasterio.CRS ---
+        src_crs = RioCRS.from_wkt(self.projection.ExportToWkt())
+
+        # --- build destination CRS from flexible input ---
+        if isinstance(dst_crs, RioCRS):
+            rio_dst_crs = dst_crs
+        elif isinstance(dst_crs, int):
+            rio_dst_crs = RioCRS.from_epsg(dst_crs)
+        elif isinstance(dst_crs, str):
+            # try EPSG string, then proj4, then WKT
+            try:
+                rio_dst_crs = RioCRS.from_string(dst_crs)
+            except CRSError:
+                rio_dst_crs = RioCRS.from_wkt(dst_crs)
+        elif isinstance(dst_crs, osr.SpatialReference):
+            rio_dst_crs = RioCRS.from_wkt(dst_crs.ExportToWkt())
+        else:
+            raise TypeError("dst_crs must be an int (EPSG), str, osr.SpatialReference, "
+                            "or rasterio.crs.CRS, got {}".format(type(dst_crs)))
+
+        ndv = nodata_value if nodata_value is not None else self.nodata_value
+        src_transform = Affine.from_gdal(*self.geot)
+        rows, cols = self.shape[0], self.shape[1]
+
+        dst_transform, dst_width, dst_height = calculate_default_transform(
+            src_crs, rio_dst_crs, cols, rows,
+            left=self.xmin, bottom=self.ymin, right=self.xmax, top=self.ymax)
+
+        # When ndv is nan it cannot fill integer arrays; use a type-safe sentinel instead.
+        # rasterio still receives nan as src_nodata so border handling is correct.
+        if ndv is not None:
+            try:
+                src_arr = self.raster.filled(ndv)
+            except (TypeError, ValueError):
+                src_arr = self.raster.filled(np.ma.default_fill_value(self.raster))
+        else:
+            src_arr = self.raster.filled(0)
+        dst_arr = np.empty((dst_height, dst_width), dtype=src_arr.dtype)
+        if ndv is not None:
+            dst_arr[:] = ndv
+
+        rio_reproject(
+            src_arr,
+            dst_arr,
+            src_transform=src_transform,
+            src_crs=src_crs,
+            dst_transform=dst_transform,
+            dst_crs=rio_dst_crs,
+            src_nodata=ndv,
+            dst_nodata=ndv,
+            resampling=resample_map[resampling],
+        )
+
+        # --- convert rasterio CRS back to osr.SpatialReference ---
+        new_proj = osr.SpatialReference()
+        new_proj.ImportFromWkt(rio_dst_crs.to_wkt())
+
+        new_geot = dst_transform.to_gdal()
+        if ndv is not None and np.isnan(ndv):
+            new_raster = np.ma.masked_invalid(dst_arr)
+        elif ndv is not None:
+            new_raster = np.ma.masked_equal(dst_arr, ndv)
+        else:
+            new_raster = np.ma.masked_array(dst_arr)
+
+        return GeoRaster(new_raster, new_geot, nodata_value=ndv,
+                         projection=new_proj, datatype=self.datatype)
+
     def to_pandas(self, **kwargs):
         """
         Convert GeoRaster to Pandas DataFrame, which can be easily exported to other types of files

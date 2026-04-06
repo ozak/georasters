@@ -223,3 +223,175 @@ def test_to_tiff_no_duplicate_extension(tmp_path):
     out2 = str(tmp_path / 'output2')
     data.to_tiff(out2)
     assert (tmp_path / 'output2.tif').exists(), "output2.tif should exist"
+
+# ---------------------------------------------------------------------------
+# Issue #4 — reproject
+# ---------------------------------------------------------------------------
+
+def test_reproject_changes_crs():
+    """Issue #4: reproject() should return a GeoRaster in the requested CRS."""
+    import georasters as gr
+    data = gr.from_file(os.path.join(DATA, 'pre1500.tif'))
+    # Source is WGS84 (EPSG:4326); reproject to Web Mercator (EPSG:3857)
+    reprojected = data.reproject(3857)
+    src_wkt  = data.projection.ExportToProj4()
+    dst_wkt  = reprojected.projection.ExportToProj4()
+    assert src_wkt != dst_wkt, "Projection should have changed"
+    assert 'merc' in dst_wkt.lower() or '3857' in reprojected.projection.ExportToWkt(), \
+        "Output should be Web Mercator"
+
+def test_reproject_epsg_string():
+    """reproject() should accept 'EPSG:NNNN' strings."""
+    import georasters as gr
+    data = gr.from_file(os.path.join(DATA, 'pre1500.tif'))
+    reprojected = data.reproject('EPSG:3857')
+    assert 'merc' in reprojected.projection.ExportToProj4().lower() or \
+        '3857' in reprojected.projection.ExportToWkt()
+
+def test_reproject_preserves_nodata():
+    """reproject() must carry the nodata value through to the output."""
+    import georasters as gr
+    data = gr.from_file(os.path.join(DATA, 'pre1500.tif'))
+    reprojected = data.reproject(3857)
+    assert reprojected.nodata_value == data.nodata_value
+
+def test_reproject_output_is_masked():
+    """reproject() output raster should be a masked array with some masked cells."""
+    import georasters as gr
+    data = gr.from_file(os.path.join(DATA, 'pre1500.tif'))
+    reprojected = data.reproject(3857)
+    assert isinstance(reprojected.raster, np.ma.MaskedArray)
+    assert reprojected.raster.mask.any(), "Reprojected raster should have some masked (nodata) cells"
+
+def test_reproject_bounds_are_valid():
+    """reproject() output should have a valid, non-zero spatial extent."""
+    import georasters as gr
+    data = gr.from_file(os.path.join(DATA, 'pre1500.tif'))
+    reprojected = data.reproject(3857)
+    assert reprojected.xmin < reprojected.xmax
+    assert reprojected.ymin < reprojected.ymax
+
+def test_reproject_invalid_resampling_raises():
+    """reproject() should raise ValueError for unknown resampling method."""
+    import georasters as gr
+    import pytest
+    data = gr.from_file(os.path.join(DATA, 'pre1500.tif'))
+    with pytest.raises(ValueError):
+        data.reproject(3857, resampling='bogus')
+
+def test_reproject_osr_input():
+    """reproject() should accept an osr.SpatialReference as dst_crs."""
+    import georasters as gr
+    from osgeo import osr
+    data = gr.from_file(os.path.join(DATA, 'pre1500.tif'))
+    dst = osr.SpatialReference()
+    dst.ImportFromEPSG(3857)
+    reprojected = data.reproject(dst)
+    assert 'merc' in reprojected.projection.ExportToProj4().lower() or \
+        '3857' in reprojected.projection.ExportToWkt()
+
+def test_reproject_roundtrip_shape():
+    """reproject() result should have non-trivial shape matching expected output dims."""
+    import georasters as gr
+    data = gr.from_file(os.path.join(DATA, 'pre1500.tif'))
+    reprojected = data.reproject(3857)
+    assert reprojected.shape[0] > 0 and reprojected.shape[1] > 0
+
+def test_reproject_nan_nodata_masked():
+    """reproject() must correctly mask border pixels when nodata_value is nan (float raster)."""
+    import georasters as gr
+    import numpy as np
+    data = gr.from_file(os.path.join(DATA, 'pre1500.tif'))
+    # Cast to float so nan is a valid fill value, then set nodata to nan
+    float_raster = np.ma.array(data.raster.data.astype(np.float64),
+                               mask=data.raster.mask)
+    geo = gr.GeoRaster(float_raster, data.geot, nodata_value=np.nan,
+                       projection=data.projection, datatype=data.datatype)
+    reprojected = geo.reproject(3857)
+    assert isinstance(reprojected.raster, np.ma.MaskedArray)
+    assert reprojected.raster.mask.any(), \
+        "Border fill pixels (nan) should be masked when nodata_value=nan"
+
+def test_reproject_against_gdal_cea():
+    """
+    Ground-truth test for reproject(): compare georasters output against an
+    independent GDAL warp to CEA (ESRI:54034).
+
+    Both pipelines must produce:
+      - the same output shape
+      - the same geotransform (within floating-point tolerance)
+      - pixel values that agree at all valid (non-nodata) locations
+    """
+    import georasters as gr
+    import numpy as np
+    from osgeo import gdal, osr
+    from rasterio.crs import CRS as RioCRS
+    from rasterio.warp import reproject as rio_reproject, Resampling, calculate_default_transform
+    from affine import Affine
+
+    src_path = os.path.join(DATA, 'pre1500.tif')
+    CEA = 'ESRI:54034'
+
+    # ------------------------------------------------------------------
+    # Reference: reproject with raw rasterio (no georasters code path)
+    # ------------------------------------------------------------------
+    src_ds  = gdal.Open(src_path)
+    ndv     = src_ds.GetRasterBand(1).GetNoDataValue()
+    geot    = src_ds.GetGeoTransform()
+    src_srs = osr.SpatialReference()
+    src_srs.ImportFromWkt(src_ds.GetProjectionRef())
+    src_crs = RioCRS.from_wkt(src_srs.ExportToWkt())
+    dst_crs = RioCRS.from_string(CEA)
+
+    xmin, xsize, _, ymax, _, ysize = geot
+    rows, cols = src_ds.RasterYSize, src_ds.RasterXSize
+    ymin  = ymax + ysize * rows
+    xmax  = xmin + xsize * cols
+
+    ref_transform, ref_width, ref_height = calculate_default_transform(
+        src_crs, dst_crs, cols, rows,
+        left=xmin, bottom=ymin, right=xmax, top=ymax)
+
+    import numpy as np
+    src_arr  = src_ds.GetRasterBand(1).ReadAsArray().astype(np.float64)
+    ref_arr  = np.full((ref_height, ref_width), ndv, dtype=np.float64)
+    rio_reproject(
+        src_arr, ref_arr,
+        src_transform=Affine.from_gdal(*geot),
+        src_crs=src_crs,
+        dst_transform=ref_transform,
+        dst_crs=dst_crs,
+        src_nodata=ndv, dst_nodata=ndv,
+        resampling=Resampling.bilinear,
+    )
+    ref_mask = (ref_arr == ndv)
+
+    # ------------------------------------------------------------------
+    # Under test: georasters reproject()
+    # ------------------------------------------------------------------
+    geo          = gr.from_file(src_path)
+    reprojected  = geo.reproject(CEA, resampling='bilinear')
+    gr_arr       = reprojected.raster.filled(ndv)
+    gr_mask      = np.ma.getmaskarray(reprojected.raster)
+
+    # --- shape must match exactly ---
+    assert reprojected.shape == (ref_height, ref_width), (
+        "Shape mismatch: georasters {} vs GDAL reference {}".format(
+            reprojected.shape, (ref_height, ref_width)))
+
+    # --- geotransform must match to sub-metre precision ---
+    ref_geot = ref_transform.to_gdal()
+    for i, (g, r) in enumerate(zip(reprojected.geot, ref_geot)):
+        assert abs(g - r) < 1.0, (
+            "geot[{}] mismatch: georasters {:.4f} vs reference {:.4f}".format(i, g, r))
+
+    # --- masks must agree at every cell ---
+    np.testing.assert_array_equal(
+        gr_mask, ref_mask,
+        err_msg="Nodata mask differs between georasters and GDAL reference")
+
+    # --- valid pixel values must agree within bilinear resampling tolerance ---
+    valid = ~ref_mask
+    np.testing.assert_allclose(
+        gr_arr[valid], ref_arr[valid], rtol=0, atol=1.0,
+        err_msg="Pixel values differ by more than 1 unit at valid locations")
