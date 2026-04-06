@@ -24,7 +24,7 @@ def test_main():
     A = gr.from_file(raster)
     assert A.count() == 2277587
     assert A.min() == 0
-    assert A.projection.ExportToProj4() == '+proj=longlat +datum=WGS84 +no_defs '
+    assert A.projection.ExportToProj4().strip() == '+proj=longlat +datum=WGS84 +no_defs'
 
 def test_extract():
     import georasters as gr
